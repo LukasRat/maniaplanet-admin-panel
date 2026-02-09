@@ -20,7 +20,7 @@ const HTTP_PORT = 3100
 const RPC_HOST = '127.0.0.1'
 const RPC_PORT = 5000
 const RPC_LOGIN = 'SuperAdmin'
-const RPC_PASSWORD = 'xc3412bdw'
+const RPC_PASSWORD = 'password'
 
 // FIXED: Use local path to avoid permission issues
 const MAPS_DIR = path.join(__dirname, 'maps_storage')
