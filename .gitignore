@@ -1,0 +1,7 @@
+node_modules/
+maps_storage/
+.gemini/
+*.log
+.env
+server.js_bkp
+tmp/

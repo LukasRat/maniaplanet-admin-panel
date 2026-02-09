@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maniaplanet Admin</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Login Modal -->
+  <div id="loginBox">
+    <div class="login-card">
+      <i class="fa-solid fa-gamepad" style="font-size: 3rem; color: var(--accent); margin-bottom: 20px;"></i>
+      <h1>Server Admin</h1>
+      <button class="btn-primary" onclick="app.login()">
+        <i class="fa-solid fa-right-to-bracket"></i> Connect to Server
+      </button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app-container">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="app-title">
+        <i class="fa-solid fa-server" style="color: var(--accent);"></i>
+        <span>ADMIN PANEL</span>
+      </div>
+
+      <div class="nav-links">
+        <button class="nav-item active" onclick="app.switchTab('dashboard')">
+          <i class="fa-solid fa-chart-line"></i> Dashboard
+        </button>
+        <button class="nav-item" onclick="app.switchTab('server')">
+          <i class="fa-solid fa-server"></i> Server
+        </button>
+        <button class="nav-item" onclick="app.switchTab('players')">
+          <i class="fa-solid fa-users"></i> Players
+        </button>
+        <button class="nav-item" onclick="app.switchTab('maps')">
+          <i class="fa-solid fa-map"></i> Map Pool
+        </button>
+        <button class="nav-item" onclick="app.switchTab('rankings')">
+          <i class="fa-solid fa-trophy"></i> Rankings
+        </button>
+        <button class="nav-item" onclick="app.switchTab('chat')">
+          <i class="fa-solid fa-comments"></i> Chat
+        </button>
+        <button class="nav-item" onclick="app.switchTab('upload')">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+        </button>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="content">
+
+      <!-- DASHBOARD SECTION -->
+      <section id="tab-dashboard" class="section active">
+        <h2>Dashboard</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Players Online</h3>
+            <div id="stat-players" class="stat-value">0</div>
+          </div>
+          <div class="stat-card">
+            <h3>Maps in Pool</h3>
+            <div id="stat-maps" class="stat-value">0</div>
+          </div>
+          <div class="stat-card">
+            <h3>Current Map</h3>
+            <div id="stat-current" class="stat-value"
+              style="font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLAYERS SECTION -->
+      <section id="tab-players" class="section">
+        <h2>Player Management</h2>
+        <div class="card">
+          <div class="list-header">
+            <span>Login / Nickname</span>
+            <span>Actions</span>
+          </div>
+          <div id="players-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- MAPS SECTION -->
+      <section id="tab-maps" class="section">
+        <h2>Map Management</h2>
+        <div class="card">
+          <div class="list-header">
+            <span>Map Name</span>
+            <span>Actions</span>
+          </div>
+          <div id="maps-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- SERVER SECTION -->
+      <section id="tab-server" class="section">
+        <h2>Server Management</h2>
+
+        <!-- Server Info Card -->
+        <div class="card">
+          <h3>Server Information</h3>
+          <div class="server-info-grid">
+            <div class="info-item">
+              <span class="info-label">Server Name</span>
+              <span id="server-name" class="info-value">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Version</span>
+              <span id="server-version" class="info-value">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Max Players</span>
+              <span id="server-max-players" class="info-value">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Max Spectators</span>
+              <span id="server-max-spectators" class="info-value">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Server Controls Card -->
+        <div class="card">
+          <h3>Server Controls</h3>
+          <div class="button-group">
+            <button class="btn-primary" onclick="app.skipMap()">
+              <i class="fa-solid fa-forward"></i> Skip Map
+            </button>
+            <button class="btn-secondary" onclick="app.restartMap()">
+              <i class="fa-solid fa-rotate-right"></i> Restart Map
+            </button>
+            <button class="btn-secondary" onclick="app.shuffleMaps()">
+              <i class="fa-solid fa-shuffle"></i> Shuffle Maps
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RANKINGS SECTION -->
+      <section id="tab-rankings" class="section">
+        <h2>Live Rankings</h2>
+        <div class="card">
+          <div class="list-header">
+            <span>Rank</span>
+            <span>Player</span>
+            <span>Best Time</span>
+          </div>
+          <div id="rankings-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT SECTION -->
+      <section id="tab-chat" class="section">
+        <h2>Server Chat</h2>
+        <div class="card">
+          <div class="chat-container">
+            <div id="chat-messages" class="chat-messages">
+              <div class="chat-placeholder">Chat messages will appear here when available</div>
+            </div>
+            <div class="chat-input-container">
+              <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input">
+              <button class="btn-primary" onclick="app.sendChat()">
+                <i class="fa-solid fa-paper-plane"></i> Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- UPLOAD SECTION -->
+      <section id="tab-upload" class="section">
+        <h2>Upload Maps</h2>
+        <div class="card">
+          <div id="drop-zone" class="upload-zone">
+            <i class="fa-solid fa-cloud-upload upload-icon"></i>
+            <h3>Drag & Drop .Gbx files here</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">or click to browse</p>
+            <input type="file" id="mapFile" multiple accept=".Map.Gbx" style="display: none">
+            <button class="btn-primary" onclick="document.getElementById('mapFile').click()">
+              Select Files
+            </button>
+          </div>
+          <div id="uploadStatus" style="margin-top: 20px; text-align: center;"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="status-toast">
+    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+    <span id="toast-message">Action successful</span>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+
+</html>
