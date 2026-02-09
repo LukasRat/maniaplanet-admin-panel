@@ -58,3 +58,7 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 ## License
 
 MIT
+
+
+## Support 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P81TXQBY)
