@@ -2,7 +2,7 @@
 
 A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers (Stadium).
 
-![Dashboard](public/screenshot.png) (Coming soon)
+![Dashboard](public/screenshot.png)
 
 ## Features
 
