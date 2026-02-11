@@ -184,7 +184,10 @@ app.get('/api/maps/files', (_, res) => {
       fs.mkdirSync(MAPS_DIR, { recursive: true })
     }
     const files = fs.readdirSync(MAPS_DIR)
-      .filter(f => f.toLowerCase().endsWith('.map.gbx'))
+      .filter(f => {
+        const lower = f.toLowerCase()
+        return lower.endsWith('.map.gbx') || lower.endsWith('.gbx')
+      })
       .sort()
 
     res.json(files)
