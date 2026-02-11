@@ -226,6 +226,14 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
       await new Promise(r => setTimeout(r, 300))
 
       try {
+        // Read the map file content
+        const mapContent = fs.readFileSync(final)
+        
+        // Upload the map file to the server using WriteFile
+        // The file path is relative to UserData/Maps directory
+        await rpcCall('WriteFile', [file.originalname, mapContent])
+        
+        // Now add the map to the server pool
         await rpcCall('AddMap', [file.originalname])
         added.push(file.originalname)
       } catch (e) {
