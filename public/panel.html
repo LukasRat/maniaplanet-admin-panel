@@ -163,7 +163,18 @@
             <button class="btn-secondary" onclick="app.shuffleMaps()">
               <i class="fa-solid fa-shuffle"></i> Shuffle Maps
             </button>
+            <button class="btn-danger" onclick="app.restartServer()">
+              <i class="fa-solid fa-power-off"></i> Restart Server
+            </button>
+            <button class="btn-secondary" onclick="app.restartExpansion()">
+              <i class="fa-solid fa-rotate"></i> Restart Expansion
+            </button>
           </div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 15px; padding: 0 10px;">
+            <i class="fa-solid fa-info-circle"></i> 
+            Note: Server restart requires restart.sh to be configured. Edit the script and uncomment your server's restart method. See README for setup instructions.
+          </p>
+          </p>
         </div>
       </section>
 
