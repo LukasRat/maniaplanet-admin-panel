@@ -14,17 +14,6 @@ IP_FILE="/home/user/Desktop/maniaplanetserver/last_public_ip.txt"
 PROCESS_NAME="ManiaPlanetServer"
 NODE_PROCESS="node server.js"
 
-# Log file for restart script
-LOG_FILE="$ADMINPANEL_DIR/restart_server.log"
-
-# Redirect all output to log file
-exec > "$LOG_FILE" 2>&1
-
-echo "========================================"
-echo "Server Restart Script"
-echo "Started at: $(date)"
-echo "========================================"
-
 # ==============================
 # Force IP laden
 # ==============================
@@ -116,4 +105,4 @@ sleep 10
 echo "[5/5] Starting expansion..."
 ./run --start
 
-echo "✔ Restart complete at $(date)"
+echo "✔ Restart complete"

@@ -56,42 +56,74 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 5. Access the panel:
    Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
 
-### Server Restart Feature
+### Configuring Server Restart (Required for Restart Button)
 
-The admin panel includes a server restart feature using the `restart.sh` script.
+⚠️ **IMPORTANT**: The "Restart Server" button will NOT work until you configure `restart.sh` for your specific server setup!
 
-#### How It Works
+The admin panel includes a server restart feature that uses the `restart.sh` script. **By default, this script is NOT configured and will fail.** You must edit it to match your server installation.
 
-When you click "Restart Server":
-1. The restart script runs as a detached background process
-2. The script stops the admin panel, ManiaPlanet server, and expansion
-3. It restarts everything in the correct order
-4. The admin panel comes back online automatically
+#### Quick Setup
 
-#### Configuration
+1. **Open the restart.sh file:**
+   ```bash
+   nano restart.sh
+   ```
 
-The `restart.sh` script is pre-configured for the following setup:
-- Server directory: `/home/user/Desktop/maniaplanetserver`
-- Expansion directory: `/home/user/Desktop/expansion`
-- Admin panel directory: `/home/user/Desktop/maniaplanetserver/adminpanel`
-- IP file: `/home/user/Desktop/maniaplanetserver/last_public_ip.txt`
+2. **Find the method that matches your setup and uncomment it:**
 
-**If your paths are different**, edit the configuration section at the top of `restart.sh`.
+   **If you use systemd (most common):**
+   ```bash
+   # Uncomment this line (remove the #):
+   sudo systemctl restart maniaplanet-server
+   ```
 
-#### Monitoring Restarts
+   **If you use screen/tmux:**
+   ```bash
+   # Uncomment and configure these lines:
+   SCREEN_NAME="maniaplanet"
+   screen -S "$SCREEN_NAME" -X quit
+   sleep 2
+   screen -dmS "$SCREEN_NAME" /path/to/ManiaPlanetServer /dedicated_cfg=your_config.txt
+   ```
 
-The restart script logs all output to `restart_server.log` in the admin panel directory. You can monitor the restart progress:
+   **If you use Docker:**
+   ```bash
+   # Uncomment and configure:
+   CONTAINER_NAME="maniaplanet-server"
+   docker restart "$CONTAINER_NAME"
+   ```
 
-```bash
-tail -f /home/user/Desktop/maniaplanetserver/adminpanel/restart_server.log
-```
+   **If you have a custom script:**
+   ```bash
+   # Add your restart command in Method 6:
+   /path/to/your/restart_script.sh
+   exit 0
+   ```
 
-#### Troubleshooting
+3. **Make the script executable:**
+   ```bash
+   chmod +x restart.sh
+   ```
 
-- **Script doesn't run** - Check that `restart.sh` is executable: `chmod +x restart.sh`
-- **IP file error** - Ensure `/home/user/Desktop/maniaplanetserver/last_public_ip.txt` exists and contains a valid IP
-- **Script fails** - Check `restart_server.log` for detailed error messages
-- **Server doesn't restart** - Verify the paths in the configuration section match your setup
+4. **Test the script manually** before using it through the UI:
+   ```bash
+   ./restart.sh
+   ```
+   
+   If you see "ERROR: No restart method configured!", you need to uncomment one of the methods in the script.
+
+5. **Test through the admin panel** - Click "Restart Server" and check:
+   - The server console for script output
+   - Whether your ManiaPlanet server actually restarts
+   - If it fails, check the browser console (F12) for error details
+
+#### Common Issues
+
+- **"Only npm gets stopped"** - The script isn't configured. Edit restart.sh and uncomment your restart method.
+- **Permission denied** - The script may need sudo. Either configure passwordless sudo or add `sudo` before the restart command.
+- **Script not found** - Make sure restart.sh is in the same directory as server.js and is executable.
+
+**Note:** The admin panel (Node.js) runs separately from your ManiaPlanet game server. This script restarts the **game server**, not the admin panel.
 
 ## Troubleshooting
 
