@@ -9,7 +9,7 @@ const path = require('path')
 const fs = require('fs')
 const multer = require('multer')
 const gbxremote = require('gbxremote')
-const { exec } = require('child_process')
+const { exec, spawn } = require('child_process')
 const util = require('util')
 const execPromise = util.promisify(exec)
 
@@ -324,37 +324,29 @@ app.post('/api/server/restart', async (_, res) => {
       })
     }
     
-    // Execute the script and capture output
-    try {
-      const { stdout, stderr } = await execPromise(scriptPath)
-      
-      // Log the output
-      console.log('=== Restart Script Success ===')
-      console.log(stdout)
-      if (stderr) console.log('stderr:', stderr)
-      console.log('==============================')
-      
-      res.json({ 
-        ok: true, 
-        message: 'Server restart completed successfully.',
-        output: stdout
-      })
-    } catch (error) {
-      // Script failed - this is expected if not configured
-      const output = error.stdout || error.stderr || error.message
-      
-      console.log('=== Restart Script Failed ===')
-      console.log('Exit code:', error.code)
-      console.log('Output:', output)
-      console.log('=============================')
-      
-      // Return error with the script's output so user knows what to configure
-      return res.status(500).json({ 
-        error: 'Restart script not configured or failed. Please configure restart.sh for your server setup.',
-        details: output,
-        exitCode: error.code
-      })
-    }
+    // Execute the script as a detached background process
+    // This is critical because the script will stop this Node.js process
+    // We need the script to continue running independently
+    const child = spawn(scriptPath, [], {
+      detached: true,
+      stdio: 'ignore',
+      cwd: __dirname
+    })
+    
+    // Unreference the child process so the parent can exit
+    child.unref()
+    
+    console.log('=== Server Restart Script Launched ===')
+    console.log('Script is running in background, will restart server and admin panel')
+    console.log('PID:', child.pid)
+    console.log('======================================')
+    
+    // Return success immediately - the script will handle the restart
+    res.json({ 
+      ok: true, 
+      message: 'Server restart initiated. The server and admin panel will restart shortly.',
+      pid: child.pid
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
