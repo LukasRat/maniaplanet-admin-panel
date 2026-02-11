@@ -291,8 +291,36 @@ const app = {
     setTimeout(() => this.refresh(), 1000)
   },
 
-  // Note: Full server restart is not supported via ManiaPlanet XML-RPC API
-  // Dedicated servers cannot restart themselves for security reasons
+  async restartServer() {
+    if (!confirm('Restart the game server? This will disconnect all players and execute the restart.sh script.')) return
+    try {
+      const response = await fetch(`${API}/server/restart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Restart failed')
+      }
+      
+      const data = await response.json()
+      this.showToast(data.message || 'Server restarting...')
+      
+      // Stop auto-refresh as server will be unavailable
+      if (this.state.autoRefresh) {
+        clearInterval(this.state.autoRefresh)
+        this.state.autoRefresh = null
+      }
+      
+      // Show message about reconnection
+      setTimeout(() => {
+        this.showToast('Server is restarting. You may need to reconnect.', 'error')
+      }, 3000)
+    } catch (err) {
+      this.showToast(err.message || 'Failed to restart server', 'error')
+    }
+  },
 
   // --- Enhanced Player Actions ---
 

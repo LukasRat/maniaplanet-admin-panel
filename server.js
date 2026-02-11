@@ -9,6 +9,9 @@ const path = require('path')
 const fs = require('fs')
 const multer = require('multer')
 const gbxremote = require('gbxremote')
+const { exec } = require('child_process')
+const util = require('util')
+const execPromise = util.promisify(exec)
 
 // Handle unhandled promise rejections to prevent server crashes
 process.on('unhandledRejection', (reason, promise) => {
@@ -300,9 +303,37 @@ app.post('/api/server/restart-map', async (_, res) => {
   }
 })
 
-// Note: Full server restart is not supported via ManiaPlanet XML-RPC API
-// Dedicated servers cannot restart themselves for security reasons
-// Use your hosting provider's control panel or SSH to restart the server process
+app.post('/api/server/restart', async (_, res) => {
+  try {
+    // Execute the restart.sh script
+    const scriptPath = path.join(__dirname, 'restart.sh')
+    
+    // Check if restart.sh exists
+    if (!fs.existsSync(scriptPath)) {
+      return res.status(500).json({ 
+        error: 'restart.sh script not found. Please create and configure the restart script.' 
+      })
+    }
+    
+    // Execute the script in the background
+    // Note: The script execution happens asynchronously and the server may restart
+    exec(scriptPath, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Restart script error:', error.message)
+        console.error('stderr:', stderr)
+      }
+      console.log('Restart script output:', stdout)
+    })
+    
+    // Return success immediately since the script runs in background
+    res.json({ 
+      ok: true, 
+      message: 'Server restart initiated. The server will restart shortly.' 
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 
 /* =========================
    ENHANCED PLAYER MANAGEMENT

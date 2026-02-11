@@ -12,6 +12,7 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 - 👥 **Player Controls:** Kick, Ban, Mute, or Spectate players directly from the UI.
 - 🕒 **Live Rankings:** Real-time session rankings with accurate best times.
 - 💬 **Integrated Chat:** Full server chat integration with support for ManiaPlanet color codes.
+- 🔄 **Server Restart:** Restart the game server via configurable restart.sh script.
 
 ## Tech Stack
 
@@ -54,6 +55,39 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 
 5. Access the panel:
    Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
+
+### Configuring Server Restart (Optional)
+
+The admin panel includes a server restart feature that uses the `restart.sh` script:
+
+1. **Review and configure `restart.sh`:**
+   ```bash
+   nano restart.sh
+   ```
+
+2. The script includes several automatic restart methods:
+   - **systemctl** - For systemd-managed servers
+   - **service** - For init.d systems
+   - **PID file** - Manual process restart
+   - **Custom command** - Add your specific restart method
+
+3. **For custom setups**, edit the script and add your restart command in "Method 4":
+   ```bash
+   # Method 4: Custom restart command (to be configured by user)
+   /path/to/your/restart/command
+   ```
+
+4. **Make sure the script is executable:**
+   ```bash
+   chmod +x restart.sh
+   ```
+
+5. **Test the script manually** before using it through the UI:
+   ```bash
+   ./restart.sh
+   ```
+
+**Note:** The Node.js process must have permission to execute the restart script. Depending on your setup, you may need to configure sudo permissions or run the admin panel with appropriate privileges.
 
 ## Troubleshooting
 
