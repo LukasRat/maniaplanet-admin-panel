@@ -315,6 +315,15 @@ app.post('/api/server/restart', async (_, res) => {
       })
     }
     
+    // Check if the script is executable
+    try {
+      fs.accessSync(scriptPath, fs.constants.X_OK)
+    } catch (err) {
+      return res.status(500).json({
+        error: 'restart.sh script is not executable. Run: chmod +x restart.sh'
+      })
+    }
+    
     // Execute the script in the background
     // Note: The script execution happens asynchronously and the server may restart
     exec(scriptPath, (error, stdout, stderr) => {

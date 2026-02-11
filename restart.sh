@@ -48,9 +48,16 @@ for PID_FILE in "${POSSIBLE_PID_FILES[@]}"; do
         if kill -0 "$PID" 2>/dev/null; then
             echo "Found server process with PID $PID, restarting..."
             kill -HUP "$PID" 2>/dev/null || kill -TERM "$PID" 2>/dev/null
+            
+            # Wait and verify the process stopped
             sleep 2
-            echo "Server restart signal sent"
-            exit 0
+            if ! kill -0 "$PID" 2>/dev/null; then
+                echo "Server process stopped successfully"
+                exit 0
+            else
+                echo "Warning: Process may still be running"
+                exit 0
+            fi
         fi
     fi
 done

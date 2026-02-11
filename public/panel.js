@@ -292,7 +292,7 @@ const app = {
   },
 
   async restartServer() {
-    if (!confirm('Restart the game server? This will disconnect all players and execute the restart.sh script.')) return
+    if (!confirm('Restart the game server? This will disconnect all players temporarily.')) return
     try {
       const response = await fetch(`${API}/server/restart`, {
         method: 'POST',
