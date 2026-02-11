@@ -531,7 +531,7 @@ const app = {
       }
 
       if (count === 0) {
-        status.textContent = 'No .map.gbx files found (case-insensitive)'
+        status.textContent = 'No .Map.Gbx files found (any capitalization accepted)'
         this.showToast('Invalid file type', 'error')
         return
       }
