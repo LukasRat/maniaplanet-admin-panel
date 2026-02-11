@@ -493,6 +493,12 @@ app.get('/api/chat/lines', async (_, res) => {
    START
 ========================= */
 
-app.listen(HTTP_PORT, HTTP_HOST, () =>
-  console.log(`Admin API running on http://${HTTP_HOST}:${HTTP_PORT}`)
-)
+app.listen(HTTP_PORT, HTTP_HOST, () => {
+  console.log('\n🚀 Maniaplanet Admin Panel Server Started!')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log(`📍 Local:    http://localhost:${HTTP_PORT}`)
+  console.log(`🌐 Network:  http://${HTTP_HOST}:${HTTP_PORT}`)
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('👉 Open http://localhost:3100 in your browser')
+  console.log('🔐 Enter your ManiaPlanet server password to login\n')
+})
