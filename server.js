@@ -286,7 +286,7 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
           try {
             await fsPromises.unlink(final)
           } catch (unlinkError) {
-            console.error(`Failed to clean up ${sanitizedName} (original: ${file.originalname}):`, unlinkError.message)
+            console.error(`Failed to delete local file ${sanitizedName} after server upload failed (original: ${file.originalname}):`, unlinkError.message)
           }
           throw new Error(`Server error: ${rpcError.message}`)
         }
