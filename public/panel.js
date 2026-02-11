@@ -212,7 +212,7 @@ const app = {
       div.className = 'list-item'
       if (isCurrent) div.style.background = 'rgba(108, 92, 231, 0.1)'
 
-      const cleanName = file.replace(/\.Map\.Gbx$/i, '').replace(/\.Gbx$/i, '')
+      const cleanName = file.replace(/\.(Map\.)?Gbx$/i, '')
 
       div.innerHTML = `
                 <div class="item-info">
