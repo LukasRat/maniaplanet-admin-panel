@@ -7,6 +7,7 @@ const express = require('express')
 const cors = require('cors')
 const path = require('path')
 const fs = require('fs')
+const fsPromises = require('fs').promises
 const multer = require('multer')
 const gbxremote = require('gbxremote')
 const { exec } = require('child_process')
@@ -108,6 +109,19 @@ async function rpcCall(method, params = []) {
 /* =========================
    HELPERS
 ========================= */
+
+function sanitizeFilename(filename) {
+  // Remove any path separators and parent directory references
+  // Only allow alphanumeric, dots, hyphens, underscores, and spaces
+  const sanitized = path.basename(filename).replace(/[^a-zA-Z0-9.\-_ ]/g, '')
+  
+  // Ensure the filename has a valid map extension
+  if (!/\.(map\.)?gbx$/i.test(sanitized)) {
+    throw new Error('Invalid map file extension')
+  }
+  
+  return sanitized
+}
 
 async function ensureMapInPool(file) {
   const maps = await rpcCall('GetChallengeList', [1000, 0])
@@ -215,37 +229,41 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
     }
 
     const added = []
+    const errors = []
 
     for (const file of req.files) {
-      const temp = file.path
-      const final = path.join(MAPS_DIR, file.originalname)
-
-      fs.renameSync(temp, final)
-
-      // kleine Pause, damit Maniaplanet sauber nachkommt
-      await new Promise(r => setTimeout(r, 300))
-
       try {
-        // Read the map file content
-        const mapContent = fs.readFileSync(final)
+        // Sanitize the filename to prevent path traversal attacks
+        const sanitizedName = sanitizeFilename(file.originalname)
+        
+        const temp = file.path
+        const final = path.join(MAPS_DIR, sanitizedName)
+
+        fs.renameSync(temp, final)
+
+        // kleine Pause, damit Maniaplanet sauber nachkommt
+        await new Promise(r => setTimeout(r, 300))
+
+        // Read the map file content asynchronously
+        const mapContent = await fsPromises.readFile(final)
         
         // Upload the map file to the server using WriteFile
         // The file path is relative to UserData/Maps directory
-        await rpcCall('WriteFile', [file.originalname, mapContent])
+        await rpcCall('WriteFile', [sanitizedName, mapContent])
         
         // Now add the map to the server pool
-        await rpcCall('AddMap', [file.originalname])
-        added.push(file.originalname)
+        await rpcCall('AddMap', [sanitizedName])
+        added.push(sanitizedName)
       } catch (e) {
-        console.error("Could not add map to server (maybe offline)", e)
-        // We still uploaded it, so we count it
-        added.push(file.originalname)
+        console.error(`Could not add map ${file.originalname} to server:`, e.message)
+        errors.push({ file: file.originalname, error: e.message })
       }
     }
 
     res.json({
       ok: true,
-      maps: added
+      maps: added,
+      errors: errors.length > 0 ? errors : undefined
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
