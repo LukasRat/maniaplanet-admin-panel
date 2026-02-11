@@ -75,7 +75,7 @@ async function connectRpc() {
   }
 
   if (!rpcPassword) {
-    throw new Error('Password not set. Please login first.')
+    throw new Error('Password required for RPC connection')
   }
 
   rpcConnecting = true
@@ -87,7 +87,10 @@ async function connectRpc() {
   } catch (err) {
     console.error('RPC Connection failed:', err.message)
     rpcReady = false
-    rpcPassword = null
+    // Only clear password on authentication errors, not connection errors
+    if (err.message && err.message.includes('Auth')) {
+      rpcPassword = null
+    }
     throw err
   }
   rpcConnecting = false
@@ -143,9 +146,14 @@ app.post('/api/login', async (req, res) => {
       res.status(503).json({ error: 'Could not connect to Game Server' })
     }
   } catch (err) {
-    rpcPassword = null
-    rpcReady = false
-    res.status(401).json({ error: 'Authentication failed. Check your password.' })
+    console.error('Login error:', err.message)
+    // Only clear password on auth failures
+    if (err.message && err.message.includes('Auth')) {
+      rpcPassword = null
+      res.status(401).json({ error: 'Authentication failed. Check your password.' })
+    } else {
+      res.status(503).json({ error: 'Could not connect to Game Server. Check if server is running.' })
+    }
   }
 })
 
