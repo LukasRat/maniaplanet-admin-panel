@@ -10,6 +10,11 @@ const fs = require('fs')
 const multer = require('multer')
 const gbxremote = require('gbxremote')
 
+// Handle unhandled promise rejections to prevent server crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection:', reason)
+})
+
 /* =========================
    CONFIG
 ========================= */
@@ -41,14 +46,26 @@ app.get('/', (_, res) =>
    GBXREMOTE
 ========================= */
 
-const rpc = gbxremote.createClient({
-  host: RPC_HOST,
-  port: RPC_PORT
-})
-
+let rpc = null
 let rpcReady = false
 let rpcConnecting = false
 let rpcPassword = null
+
+function createRpcClient() {
+  if (!rpc) {
+    rpc = gbxremote.createClient({
+      host: RPC_HOST,
+      port: RPC_PORT
+    })
+    
+    // Prevent server crashes from RPC connection errors
+    rpc.on('error', (err) => {
+      console.error('RPC connection error:', err.message)
+      rpcReady = false
+    })
+  }
+  return rpc
+}
 
 async function connectRpc() {
   if (rpcReady) return
@@ -63,8 +80,9 @@ async function connectRpc() {
 
   rpcConnecting = true
   try {
-    await rpc.connect()
-    await rpc.query('Authenticate', [RPC_LOGIN, rpcPassword])
+    const client = createRpcClient()
+    await client.connect()
+    await client.query('Authenticate', [RPC_LOGIN, rpcPassword])
     rpcReady = true
   } catch (err) {
     console.error('RPC Connection failed:', err.message)
@@ -78,7 +96,7 @@ async function connectRpc() {
 async function rpcCall(method, params = []) {
   await connectRpc()
   if (!rpcReady) throw new Error('Not connected to Maniaplanet Server')
-  return rpc.query(method, params)
+  return createRpcClient().query(method, params)
 }
 
 /* =========================
