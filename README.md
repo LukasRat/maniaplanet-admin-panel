@@ -33,10 +33,11 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
    cd maniaplanet-admin-panel
    ```
 
-2. Install dependencies:
+2. **Install dependencies** (⚠️ Required - do not skip this step):
    ```bash
    npm install
    ```
+   > **Note:** This installs Express, gbxremote, and other required packages. If you skip this step, you'll get "Cannot find module 'express'" errors.
 
 3. Configure your server:
    Edit `server.js` and update the constants at the top:
@@ -53,6 +54,27 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 
 5. Access the panel:
    Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
+
+## Troubleshooting
+
+### Error: Cannot find module 'express'
+
+If you see this error when running `npm start`:
+```
+Error: Cannot find module 'express'
+```
+
+**Solution:** You need to install dependencies first:
+```bash
+npm install
+```
+
+This happens because `node_modules/` is not included in the repository (it's in `.gitignore`). You must run `npm install` to download all required packages before starting the server.
+
+### Other Common Issues
+
+- **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on port 5000
+- **Port 3100 already in use:** Change `HTTP_PORT` in `server.js` or stop the process using port 3100
 
 ## License
 
