@@ -111,13 +111,23 @@ async function rpcCall(method, params = []) {
 ========================= */
 
 function sanitizeFilename(filename) {
+  // First validate the extension on the original filename
+  if (!/\.(map\.)?gbx$/i.test(filename)) {
+    throw new Error('Invalid map file extension. File must end with .gbx or .Map.Gbx')
+  }
+  
   // Remove any path separators and parent directory references
   // Only allow alphanumeric, dots, hyphens, underscores, and spaces
   const sanitized = path.basename(filename).replace(/[^a-zA-Z0-9.\-_ ]/g, '')
   
-  // Ensure the filename has a valid map extension
+  // Prevent filenames that are only dots or contain dangerous patterns
+  if (!sanitized || /^\.+$/.test(sanitized) || sanitized.includes('..')) {
+    throw new Error('Invalid filename pattern')
+  }
+  
+  // Ensure the sanitized filename still has a valid extension
   if (!/\.(map\.)?gbx$/i.test(sanitized)) {
-    throw new Error('Invalid map file extension')
+    throw new Error('Filename became invalid after sanitization')
   }
   
   return sanitized
@@ -244,16 +254,27 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
         // kleine Pause, damit Maniaplanet sauber nachkommt
         await new Promise(r => setTimeout(r, 300))
 
-        // Read the map file content asynchronously
-        const mapContent = await fsPromises.readFile(final)
-        
-        // Upload the map file to the server using WriteFile
-        // The file path is relative to UserData/Maps directory
-        await rpcCall('WriteFile', [sanitizedName, mapContent])
-        
-        // Now add the map to the server pool
-        await rpcCall('AddMap', [sanitizedName])
-        added.push(sanitizedName)
+        try {
+          // Read the map file content asynchronously
+          const mapContent = await fsPromises.readFile(final)
+          
+          // Upload the map file to the server using WriteFile
+          // The file path is relative to UserData/Maps directory
+          // Convert buffer to base64 as expected by Maniaplanet XML-RPC
+          await rpcCall('WriteFile', [sanitizedName, mapContent])
+          
+          // Now add the map to the server pool
+          await rpcCall('AddMap', [sanitizedName])
+          added.push(sanitizedName)
+        } catch (rpcError) {
+          // Clean up local file if server upload/add failed
+          try {
+            await fsPromises.unlink(final)
+          } catch (unlinkError) {
+            console.error(`Failed to clean up ${sanitizedName}:`, unlinkError.message)
+          }
+          throw new Error(`Server error: ${rpcError.message}`)
+        }
       } catch (e) {
         console.error(`Could not add map ${file.originalname} to server:`, e.message)
         errors.push({ file: file.originalname, error: e.message })
@@ -263,7 +284,7 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
     res.json({
       ok: true,
       maps: added,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
