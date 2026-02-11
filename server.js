@@ -500,5 +500,5 @@ app.listen(HTTP_PORT, HTTP_HOST, () => {
   console.log(`🌐 Network:  http://${HTTP_HOST}:${HTTP_PORT}`)
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('👉 Open http://localhost:3100 in your browser')
-  console.log('🔐 Enter your ManiaPlanet server password to login\n')
+  console.log('🔐 Enter your maniaplanet Superadmin password to login\n')
 })

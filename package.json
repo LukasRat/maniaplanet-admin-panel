@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "prestart": "node -e \"if (!require('fs').existsSync('node_modules')) { console.error('\\n❌ Error: Dependencies not installed!\\n\\nPlease run: npm install\\n'); process.exit(1); }\"",
+    "prestart": "node check-deps.js",
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
