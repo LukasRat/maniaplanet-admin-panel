@@ -291,12 +291,8 @@ const app = {
     setTimeout(() => this.refresh(), 1000)
   },
 
-  async restartServer() {
-    if (!confirm('Restart the game server? This will disconnect all players temporarily.')) return
-    await this.post('/server/restart', {})
-    this.showToast('Server restarting...')
-    setTimeout(() => this.refresh(), 3000)
-  },
+  // Note: Full server restart is not supported via ManiaPlanet XML-RPC API
+  // Dedicated servers cannot restart themselves for security reasons
 
   // --- Enhanced Player Actions ---
 

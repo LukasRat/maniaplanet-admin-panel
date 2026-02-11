@@ -300,14 +300,9 @@ app.post('/api/server/restart-map', async (_, res) => {
   }
 })
 
-app.post('/api/server/restart', async (_, res) => {
-  try {
-    await rpcCall('RestartServer')
-    res.json({ ok: true })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
+// Note: Full server restart is not supported via ManiaPlanet XML-RPC API
+// Dedicated servers cannot restart themselves for security reasons
+// Use your hosting provider's control panel or SSH to restart the server process
 
 /* =========================
    ENHANCED PLAYER MANAGEMENT
