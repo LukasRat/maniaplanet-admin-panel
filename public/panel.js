@@ -299,12 +299,20 @@ const app = {
         headers: { 'Content-Type': 'application/json' }
       })
       
+      const data = await response.json()
+      
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Restart failed')
+        // Show detailed error message
+        let errorMsg = data.error || 'Restart failed'
+        if (data.details) {
+          // Show configuration error details
+          console.error('Restart script output:', data.details)
+          errorMsg += '\n\nThe restart.sh script needs to be configured for your server.'
+          errorMsg += '\nCheck the browser console or server logs for details.'
+        }
+        throw new Error(errorMsg)
       }
       
-      const data = await response.json()
       this.showToast(data.message || 'Server restarting...')
       
       // Stop auto-refresh as server will be unavailable

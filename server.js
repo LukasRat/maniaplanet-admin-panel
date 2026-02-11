@@ -324,21 +324,37 @@ app.post('/api/server/restart', async (_, res) => {
       })
     }
     
-    // Execute the script in the background
-    // Note: The script execution happens asynchronously and the server may restart
-    exec(scriptPath, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Restart script error:', error.message)
-        console.error('stderr:', stderr)
-      }
-      console.log('Restart script output:', stdout)
-    })
-    
-    // Return success immediately since the script runs in background
-    res.json({ 
-      ok: true, 
-      message: 'Server restart initiated. The server will restart shortly.' 
-    })
+    // Execute the script and capture output
+    try {
+      const { stdout, stderr } = await execPromise(scriptPath)
+      
+      // Log the output
+      console.log('=== Restart Script Success ===')
+      console.log(stdout)
+      if (stderr) console.log('stderr:', stderr)
+      console.log('==============================')
+      
+      res.json({ 
+        ok: true, 
+        message: 'Server restart completed successfully.',
+        output: stdout
+      })
+    } catch (error) {
+      // Script failed - this is expected if not configured
+      const output = error.stdout || error.stderr || error.message
+      
+      console.log('=== Restart Script Failed ===')
+      console.log('Exit code:', error.code)
+      console.log('Output:', output)
+      console.log('=============================')
+      
+      // Return error with the script's output so user knows what to configure
+      return res.status(500).json({ 
+        error: 'Restart script not configured or failed. Please configure restart.sh for your server setup.',
+        details: output,
+        exitCode: error.code
+      })
+    }
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
