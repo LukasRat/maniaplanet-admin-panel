@@ -1,107 +1,108 @@
 #!/bin/bash
-#
-# ManiaPlanet Server Restart Script
-# This script attempts to restart the ManiaPlanet dedicated server
-#
-# IMPORTANT: This script needs to be configured for your specific server setup!
-# By default, it will NOT restart anything - you must uncomment and configure
-# one of the methods below that matches your server installation.
-#
-# Usage: ./restart.sh
-#
 
-echo "========================================"
-echo "ManiaPlanet Server Restart Script"
-echo "Started at: $(date)"
-echo "========================================"
+# ==============================
+# Konfiguration
+# ==============================
+SERVER_DIR="/home/user/Desktop/maniaplanetserver"
+EXPANSION_DIR="/home/user/Desktop/expansion"
+ADMINPANEL_DIR="/home/user/Desktop/maniaplanetserver/adminpanel"
 
-# ============================================================================
-# METHOD 1: SYSTEMD SERVICE (Most common for modern Linux)
-# ============================================================================
-# If your ManiaPlanet server runs as a systemd service, uncomment ONE of these:
-#
-# sudo systemctl restart maniaplanet-server
-# sudo systemctl restart trackmania-server
-#
-# Note: You may need to configure sudo to allow this without password
+SERVER_BIN="./ManiaPlanetServer"
 
-# ============================================================================
-# METHOD 2: INIT.D SERVICE (Older Linux systems)
-# ============================================================================
-# If your server uses init.d, uncomment ONE of these:
-#
-# sudo service maniaplanet-server restart
-# sudo service trackmania-server restart
+IP_FILE="/home/user/Desktop/maniaplanetserver/last_public_ip.txt"
 
-# ============================================================================
-# METHOD 3: DIRECT PROCESS RESTART (If you have a PID file)
-# ============================================================================
-# If you know where your server's PID file is located, uncomment and modify:
-#
-# PID_FILE="/path/to/your/server.pid"
-# if [ -f "$PID_FILE" ]; then
-#     PID=$(cat "$PID_FILE")
-#     if kill -0 "$PID" 2>/dev/null; then
-#         echo "Stopping server process $PID..."
-#         kill -TERM "$PID"
-#         sleep 3
-#         if kill -0 "$PID" 2>/dev/null; then
-#             echo "Force killing process..."
-#             kill -9 "$PID"
-#         fi
-#         echo "Starting server again..."
-#         # Add your server start command here:
-#         # /path/to/ManiaPlanetServer /dedicated_cfg=your_config.txt &
-#         echo "Server restarted successfully"
-#         exit 0
-#     fi
-# fi
+PROCESS_NAME="ManiaPlanetServer"
+NODE_PROCESS="node server.js"
 
-# ============================================================================
-# METHOD 4: SCREEN/TMUX SESSION RESTART
-# ============================================================================
-# If your server runs in a screen or tmux session:
-#
-# SCREEN_NAME="maniaplanet"
-# screen -S "$SCREEN_NAME" -X quit
-# sleep 2
-# screen -dmS "$SCREEN_NAME" /path/to/ManiaPlanetServer /dedicated_cfg=your_config.txt
-# echo "Server restarted in screen session: $SCREEN_NAME"
-# exit 0
+# ==============================
+# Force IP laden
+# ==============================
+if [ ! -f "$IP_FILE" ]; then
+    echo "❌ Fehler: IP-Datei nicht gefunden: $IP_FILE"
+    exit 1
+fi
 
-# ============================================================================
-# METHOD 5: DOCKER CONTAINER RESTART
-# ============================================================================
-# If your server runs in Docker:
-#
-# CONTAINER_NAME="maniaplanet-server"
-# docker restart "$CONTAINER_NAME"
-# echo "Docker container $CONTAINER_NAME restarted"
-# exit 0
+FORCE_IP_ADDRESS=$(cat "$IP_FILE")
 
-# ============================================================================
-# METHOD 6: CUSTOM COMMAND (Your specific setup)
-# ============================================================================
-# Add your custom restart command here. For example:
-#
-# /opt/maniaplanet/restart_server.sh
-# exit 0
+if [ -z "$FORCE_IP_ADDRESS" ]; then
+    echo "❌ Fehler: IP-Datei ist leer"
+    exit 1
+fi
 
-# ============================================================================
-# ERROR: NO METHOD CONFIGURED
-# ============================================================================
-echo ""
-echo "ERROR: No restart method configured!"
-echo ""
-echo "This script needs to be customized for your server setup."
-echo "Please edit restart.sh and uncomment/configure one of the methods above."
-echo ""
-echo "Common configurations:"
-echo "  - Systemd service: uncomment line with 'systemctl restart'"
-echo "  - Screen/tmux: uncomment and configure screen session method"
-echo "  - Docker: uncomment and configure docker restart method"
-echo "  - Custom script: add your restart command in Method 6"
-echo ""
-echo "After configuring, test manually with: ./restart.sh"
-echo ""
-exit 1
+# ==============================
+# Server Args
+# ==============================
+SERVER_ARGS="/dedicated_cfg=dedicated_cfg.txt \
+/title=TMStadium@nadeo \
+/game_settings=/home/user/Desktop/maniaplanetserver/UserData/Maps/MatchSettings/maplist.txt \
+/forceip=${FORCE_IP_ADDRESS}"
+
+# ==============================
+# Stop Node Adminpanel
+# ==============================
+echo "[0/5] Stopping node server.js..."
+pkill -TERM -f "$NODE_PROCESS"
+
+while pgrep -f "$NODE_PROCESS" >/dev/null; do
+    echo "  → waiting for node server.js to stop..."
+    sleep 1
+done
+
+echo "  ✔ node server.js stopped"
+
+# ==============================
+# Stop Server
+# ==============================
+echo "[1/5] Stopping ManiaPlanetServer..."
+
+pkill -TERM -f "$PROCESS_NAME"
+
+while pgrep -f "$PROCESS_NAME" >/dev/null; do
+    echo "  → waiting for server to stop..."
+    sleep 1
+done
+
+echo "  ✔ server stopped"
+sleep 10
+# ==============================
+# Start Server
+# ==============================
+echo "[2/5] Starting ManiaPlanetServer..."
+cd "$SERVER_DIR" || exit 1
+
+$SERVER_BIN $SERVER_ARGS &
+
+until pgrep -f "$PROCESS_NAME" >/dev/null; do
+    echo "  → waiting for server to start..."
+    sleep 1
+done
+
+echo "  ✔ server running"
+
+sleep 5
+
+# ==============================
+# Start Node Adminpanel
+# ==============================
+echo "[3/5] Starting node server.js..."
+cd "$ADMINPANEL_DIR" || exit 1
+nohup node server.js > adminpanel.log 2>&1 &
+
+echo "  ✔ node server.js running"
+
+# ==============================
+# Expansion stoppen
+# ==============================
+echo "[4/5] Stopping expansion..."
+cd "$EXPANSION_DIR" || exit 1
+./run --stop
+
+sleep 10
+
+# ==============================
+# Expansion starten
+# ==============================
+echo "[5/5] Starting expansion..."
+./run --start
+
+echo "✔ Restart complete"
