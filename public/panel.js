@@ -212,7 +212,7 @@ const app = {
       div.className = 'list-item'
       if (isCurrent) div.style.background = 'rgba(108, 92, 231, 0.1)'
 
-      const cleanName = file.replace(/\.Map\.Gbx$/i, '')
+      const cleanName = file.replace(/\.(Map\.)?Gbx$/i, '')
 
       div.innerHTML = `
                 <div class="item-info">
@@ -522,16 +522,17 @@ const app = {
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...'
 
       const form = new FormData()
+      const pattern = /\.(map\.)?gbx$/i
       let count = 0
       for (let i = 0; i < files.length; i++) {
-        if (files[i].name.endsWith('.Map.Gbx')) {
+        if (pattern.test(files[i].name)) {
           form.append('map', files[i])
           count++
         }
       }
 
       if (count === 0) {
-        status.textContent = 'No .Map.Gbx files found'
+        status.textContent = 'No .gbx or .Map.Gbx files found (any capitalization accepted)'
         this.showToast('Invalid file type', 'error')
         return
       }
