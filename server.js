@@ -20,7 +20,6 @@ const HTTP_PORT = 3100
 const RPC_HOST = '127.0.0.1'
 const RPC_PORT = 5000
 const RPC_LOGIN = 'SuperAdmin'
-const RPC_PASSWORD = 'password'
 
 // FIXED: Use local path to avoid permission issues
 const MAPS_DIR = path.join(__dirname, 'maps_storage')
@@ -49,6 +48,7 @@ const rpc = gbxremote.createClient({
 
 let rpcReady = false
 let rpcConnecting = false
+let rpcPassword = null
 
 async function connectRpc() {
   if (rpcReady) return
@@ -57,14 +57,20 @@ async function connectRpc() {
     return
   }
 
+  if (!rpcPassword) {
+    throw new Error('Password not set. Please login first.')
+  }
+
   rpcConnecting = true
   try {
     await rpc.connect()
-    await rpc.query('Authenticate', [RPC_LOGIN, RPC_PASSWORD])
+    await rpc.query('Authenticate', [RPC_LOGIN, rpcPassword])
     rpcReady = true
   } catch (err) {
     console.error('RPC Connection failed:', err.message)
-    // Allow retry later
+    rpcReady = false
+    rpcPassword = null
+    throw err
   }
   rpcConnecting = false
 }
@@ -97,16 +103,31 @@ const upload = multer({
    API
 ========================= */
 
-app.post('/api/login', async (_, res) => {
+app.post('/api/login', async (req, res) => {
   try {
+    const { password } = req.body
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' })
+    }
+
+    // Set the password for RPC connection
+    rpcPassword = password
+    
+    // Reset connection state to force re-authentication
+    rpcReady = false
+    
     await connectRpc()
     if (rpcReady) {
       res.json({ ok: true })
     } else {
+      rpcPassword = null
       res.status(503).json({ error: 'Could not connect to Game Server' })
     }
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    rpcPassword = null
+    rpcReady = false
+    res.status(401).json({ error: 'Authentication failed. Check your password.' })
   }
 })
 

@@ -12,8 +12,22 @@ const app = {
 
   async login() {
     try {
-      const res = await fetch(`${API}/login`, { method: 'POST' })
-      if (!res.ok) throw new Error('Login failed')
+      const password = document.getElementById('loginPassword').value.trim()
+      if (!password) {
+        this.showToast('Please enter a password', 'error')
+        return
+      }
+
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
+      
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Login failed' }))
+        throw new Error(error.error || 'Login failed')
+      }
 
       this.showToast('Connected to Server', 'success')
 
@@ -27,7 +41,7 @@ const app = {
       this.initDragAndDrop()
 
     } catch (e) {
-      this.showToast('Login failed. Check server.', 'error')
+      this.showToast(e.message || 'Login failed. Check server.', 'error')
     }
   },
 
