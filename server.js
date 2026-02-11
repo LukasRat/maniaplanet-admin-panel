@@ -112,7 +112,7 @@ async function rpcCall(method, params = []) {
 
 function sanitizeFilename(filename) {
   // First validate the extension on the original filename
-  if (!/\.(map\.)?gbx$/i.test(filename)) {
+  if (!/\.(?:Map\.)?Gbx$/i.test(filename)) {
     throw new Error('Invalid map file extension. File must end with .gbx or .Map.Gbx')
   }
   
@@ -132,8 +132,13 @@ function sanitizeFilename(filename) {
     throw new Error('Filename became empty after sanitization')
   }
   
+  // Check for dangerous patterns after sanitization
+  if (sanitized.includes('..') || /^\.+$/.test(sanitized)) {
+    throw new Error('Invalid filename pattern after sanitization')
+  }
+  
   // Ensure the sanitized filename still has a valid extension
-  if (!/\.(map\.)?gbx$/i.test(sanitized)) {
+  if (!/\.(?:Map\.)?Gbx$/i.test(sanitized)) {
     throw new Error('Filename became invalid after sanitization')
   }
   
@@ -259,7 +264,7 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
         const temp = file.path
         const final = path.join(MAPS_DIR, sanitizedName)
 
-        fs.renameSync(temp, final)
+        await fsPromises.rename(temp, final)
 
         // kleine Pause, damit Maniaplanet sauber nachkommt
         await new Promise(r => setTimeout(r, 300))
@@ -281,7 +286,7 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
           try {
             await fsPromises.unlink(final)
           } catch (unlinkError) {
-            console.error(`Failed to clean up ${sanitizedName}:`, unlinkError.message)
+            console.error(`Failed to clean up ${sanitizedName} (original: ${file.originalname}):`, unlinkError.message)
           }
           throw new Error(`Server error: ${rpcError.message}`)
         }
