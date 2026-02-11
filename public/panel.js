@@ -522,10 +522,10 @@ const app = {
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...'
 
       const form = new FormData()
+      const pattern = /\.(map\.)?gbx$/i
       let count = 0
       for (let i = 0; i < files.length; i++) {
-        const lower = files[i].name.toLowerCase()
-        if (lower.endsWith('.map.gbx') || lower.endsWith('.gbx')) {
+        if (pattern.test(files[i].name)) {
           form.append('map', files[i])
           count++
         }
