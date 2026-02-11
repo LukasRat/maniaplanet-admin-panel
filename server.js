@@ -122,8 +122,10 @@ function sanitizeFilename(filename) {
   }
   
   // Remove any path separators and parent directory references
-  // Only allow alphanumeric, single dots, hyphens, underscores, and spaces
-  const sanitized = path.basename(filename).replace(/[^a-zA-Z0-9.\-_ ]/g, '')
+  // Only allow alphanumeric, single dots, hyphens, and underscores
+  // Replace spaces with underscores for better compatibility
+  let sanitized = path.basename(filename).replace(/\s+/g, '_')
+  sanitized = sanitized.replace(/[^a-zA-Z0-9.\-_]/g, '')
   
   // Ensure we have a valid filename after sanitization
   if (!sanitized) {
@@ -149,6 +151,9 @@ async function ensureMapInPool(file) {
 ========================= */
 const upload = multer({
   dest: MAPS_DIR,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit for map files
+  }
 })
 
 
