@@ -205,6 +205,28 @@ input:focus {
   border-radius: 6px 0 0 6px;
 }
 
+/* Logout Button */
+.logout-btn {
+  margin-top: auto;
+  background: rgba(255, 118, 117, 0.1);
+  color: var(--danger);
+  width: 100%;
+  padding: 10px 14px;
+  justify-content: flex-start;
+  text-align: left;
+  border: 1px solid rgba(255, 118, 117, 0.2);
+}
+
+.logout-btn i {
+  width: 20px;
+  text-align: center;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 118, 117, 0.2);
+  border-color: var(--danger);
+}
+
 /* Content Area */
 .content {
   flex: 1;

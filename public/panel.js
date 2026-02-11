@@ -45,6 +45,35 @@ const app = {
     }
   },
 
+  logout() {
+    // Clear auto refresh interval
+    if (this.state.autoRefresh) {
+      clearInterval(this.state.autoRefresh)
+      this.state.autoRefresh = null
+    }
+
+    // Reset state
+    this.state.currentTab = 'dashboard'
+    this.state.lastPlayers = []
+
+    // Clear password input
+    document.getElementById('loginPassword').value = ''
+
+    // Hide app container and show login box
+    document.getElementById('app-container').classList.remove('visible')
+    document.getElementById('loginBox').classList.remove('hidden')
+
+    // Reset active tab
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
+    document.querySelectorAll('.nav-item')[0].classList.add('active')
+
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(el => el.classList.remove('active'))
+    document.getElementById('tab-dashboard').classList.add('active')
+
+    this.showToast('Logged out successfully', 'success')
+  },
+
   async refresh() {
     try {
       const [statusRes, filesRes, serverInfoRes, rankingsRes, chatRes] = await Promise.all([
