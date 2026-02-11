@@ -300,6 +300,15 @@ app.post('/api/server/restart-map', async (_, res) => {
   }
 })
 
+app.post('/api/server/restart', async (_, res) => {
+  try {
+    await rpcCall('RestartServer')
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 /* =========================
    ENHANCED PLAYER MANAGEMENT
 ========================= */
