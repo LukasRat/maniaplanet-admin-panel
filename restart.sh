@@ -5,14 +5,12 @@
 # ==============================
 SERVER_DIR="/home/user/Desktop/maniaplanetserver"
 EXPANSION_DIR="/home/user/Desktop/expansion"
-ADMINPANEL_DIR="/home/user/Desktop/maniaplanetserver/adminpanel"
 
 SERVER_BIN="./ManiaPlanetServer"
 
 IP_FILE="/home/user/Desktop/maniaplanetserver/last_public_ip.txt"
 
 PROCESS_NAME="ManiaPlanetServer"
-NODE_PROCESS="node server.js"
 
 # ==============================
 # Force IP laden
@@ -38,22 +36,9 @@ SERVER_ARGS="/dedicated_cfg=dedicated_cfg.txt \
 /forceip=${FORCE_IP_ADDRESS}"
 
 # ==============================
-# Stop Node Adminpanel
-# ==============================
-echo "[0/5] Stopping node server.js..."
-pkill -TERM -f "$NODE_PROCESS"
-
-while pgrep -f "$NODE_PROCESS" >/dev/null; do
-    echo "  → waiting for node server.js to stop..."
-    sleep 1
-done
-
-echo "  ✔ node server.js stopped"
-
-# ==============================
 # Stop Server
 # ==============================
-echo "[1/5] Stopping ManiaPlanetServer..."
+echo "[1/4] Stopping ManiaPlanetServer..."
 
 pkill -TERM -f "$PROCESS_NAME"
 
@@ -67,7 +52,7 @@ sleep 10
 # ==============================
 # Start Server
 # ==============================
-echo "[2/5] Starting ManiaPlanetServer..."
+echo "[2/4] Starting ManiaPlanetServer..."
 cd "$SERVER_DIR" || exit 1
 
 $SERVER_BIN $SERVER_ARGS &
@@ -82,18 +67,9 @@ echo "  ✔ server running"
 sleep 5
 
 # ==============================
-# Start Node Adminpanel
-# ==============================
-echo "[3/5] Starting node server.js..."
-cd "$ADMINPANEL_DIR" || exit 1
-nohup node server.js > adminpanel.log 2>&1 &
-
-echo "  ✔ node server.js running"
-
-# ==============================
 # Expansion stoppen
 # ==============================
-echo "[4/5] Stopping expansion..."
+echo "[3/4] Stopping expansion..."
 cd "$EXPANSION_DIR" || exit 1
 ./run --stop
 
@@ -102,7 +78,7 @@ sleep 10
 # ==============================
 # Expansion starten
 # ==============================
-echo "[5/5] Starting expansion..."
+echo "[4/4] Starting expansion..."
 ./run --start
 
 echo "✔ Restart complete"
