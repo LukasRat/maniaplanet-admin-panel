@@ -116,13 +116,18 @@ function sanitizeFilename(filename) {
     throw new Error('Invalid map file extension. File must end with .gbx or .Map.Gbx')
   }
   
+  // Check for dangerous patterns before sanitization
+  if (filename.includes('..') || /^\.+$/.test(filename)) {
+    throw new Error('Invalid filename pattern')
+  }
+  
   // Remove any path separators and parent directory references
-  // Only allow alphanumeric, dots, hyphens, underscores, and spaces
+  // Only allow alphanumeric, single dots, hyphens, underscores, and spaces
   const sanitized = path.basename(filename).replace(/[^a-zA-Z0-9.\-_ ]/g, '')
   
-  // Prevent filenames that are only dots or contain dangerous patterns
-  if (!sanitized || /^\.+$/.test(sanitized) || sanitized.includes('..')) {
-    throw new Error('Invalid filename pattern')
+  // Ensure we have a valid filename after sanitization
+  if (!sanitized) {
+    throw new Error('Filename became empty after sanitization')
   }
   
   // Ensure the sanitized filename still has a valid extension
@@ -260,7 +265,7 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
           
           // Upload the map file to the server using WriteFile
           // The file path is relative to UserData/Maps directory
-          // Convert buffer to base64 as expected by Maniaplanet XML-RPC
+          // The gbxremote library handles binary data encoding automatically
           await rpcCall('WriteFile', [sanitizedName, mapContent])
           
           // Now add the map to the server pool
