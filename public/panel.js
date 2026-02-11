@@ -524,14 +524,14 @@ const app = {
       const form = new FormData()
       let count = 0
       for (let i = 0; i < files.length; i++) {
-        if (files[i].name.endsWith('.Map.Gbx')) {
+        if (files[i].name.toLowerCase().endsWith('.map.gbx')) {
           form.append('map', files[i])
           count++
         }
       }
 
       if (count === 0) {
-        status.textContent = 'No .Map.Gbx files found'
+        status.textContent = 'No .map.gbx files found (case-insensitive)'
         this.showToast('Invalid file type', 'error')
         return
       }
