@@ -12,8 +12,22 @@ const app = {
 
   async login() {
     try {
-      const res = await fetch(`${API}/login`, { method: 'POST' })
-      if (!res.ok) throw new Error('Login failed')
+      const password = document.getElementById('loginPassword').value.trim()
+      if (!password) {
+        this.showToast('Please enter a password', 'error')
+        return
+      }
+
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
+      
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Login failed' }))
+        throw new Error(error.error || 'Login failed')
+      }
 
       this.showToast('Connected to Server', 'success')
 
@@ -27,8 +41,37 @@ const app = {
       this.initDragAndDrop()
 
     } catch (e) {
-      this.showToast('Login failed. Check server.', 'error')
+      this.showToast(e.message || 'Login failed. Check server.', 'error')
     }
+  },
+
+  logout() {
+    // Clear auto refresh interval
+    if (this.state.autoRefresh) {
+      clearInterval(this.state.autoRefresh)
+      this.state.autoRefresh = null
+    }
+
+    // Reset state
+    this.state.currentTab = 'dashboard'
+    this.state.lastPlayers = []
+
+    // Clear password input
+    document.getElementById('loginPassword').value = ''
+
+    // Hide app container and show login box
+    document.getElementById('app-container').classList.remove('visible')
+    document.getElementById('loginBox').classList.remove('hidden')
+
+    // Reset active tab
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'))
+    document.querySelectorAll('.nav-item')[0].classList.add('active')
+
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(el => el.classList.remove('active'))
+    document.getElementById('tab-dashboard').classList.add('active')
+
+    this.showToast('Logged out successfully', 'success')
   },
 
   async refresh() {

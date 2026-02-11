@@ -10,6 +10,11 @@ const fs = require('fs')
 const multer = require('multer')
 const gbxremote = require('gbxremote')
 
+// Handle unhandled promise rejections to prevent server crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection:', reason)
+})
+
 /* =========================
    CONFIG
 ========================= */
@@ -20,7 +25,6 @@ const HTTP_PORT = 3100
 const RPC_HOST = '127.0.0.1'
 const RPC_PORT = 5000
 const RPC_LOGIN = 'SuperAdmin'
-const RPC_PASSWORD = 'password'
 
 // FIXED: Use local path to avoid permission issues
 const MAPS_DIR = path.join(__dirname, 'maps_storage')
@@ -42,13 +46,26 @@ app.get('/', (_, res) =>
    GBXREMOTE
 ========================= */
 
-const rpc = gbxremote.createClient({
-  host: RPC_HOST,
-  port: RPC_PORT
-})
-
+let rpc = null
 let rpcReady = false
 let rpcConnecting = false
+let rpcPassword = null
+
+function createRpcClient() {
+  if (!rpc) {
+    rpc = gbxremote.createClient({
+      host: RPC_HOST,
+      port: RPC_PORT
+    })
+    
+    // Prevent server crashes from RPC connection errors
+    rpc.on('error', (err) => {
+      console.error('RPC connection error:', err.message)
+      rpcReady = false
+    })
+  }
+  return rpc
+}
 
 async function connectRpc() {
   if (rpcReady) return
@@ -57,14 +74,24 @@ async function connectRpc() {
     return
   }
 
+  if (!rpcPassword) {
+    throw new Error('Password required for RPC connection')
+  }
+
   rpcConnecting = true
   try {
-    await rpc.connect()
-    await rpc.query('Authenticate', [RPC_LOGIN, RPC_PASSWORD])
+    const client = createRpcClient()
+    await client.connect()
+    await client.query('Authenticate', [RPC_LOGIN, rpcPassword])
     rpcReady = true
   } catch (err) {
     console.error('RPC Connection failed:', err.message)
-    // Allow retry later
+    rpcReady = false
+    // Only clear password on authentication errors, not connection errors
+    if (err.message && err.message.includes('Auth')) {
+      rpcPassword = null
+    }
+    throw err
   }
   rpcConnecting = false
 }
@@ -72,7 +99,7 @@ async function connectRpc() {
 async function rpcCall(method, params = []) {
   await connectRpc()
   if (!rpcReady) throw new Error('Not connected to Maniaplanet Server')
-  return rpc.query(method, params)
+  return createRpcClient().query(method, params)
 }
 
 /* =========================
@@ -97,16 +124,36 @@ const upload = multer({
    API
 ========================= */
 
-app.post('/api/login', async (_, res) => {
+app.post('/api/login', async (req, res) => {
   try {
+    const { password } = req.body
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' })
+    }
+
+    // Set the password for RPC connection
+    rpcPassword = password
+    
+    // Reset connection state to force re-authentication
+    rpcReady = false
+    
     await connectRpc()
     if (rpcReady) {
       res.json({ ok: true })
     } else {
+      rpcPassword = null
       res.status(503).json({ error: 'Could not connect to Game Server' })
     }
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    console.error('Login error:', err.message)
+    // Only clear password on auth failures
+    if (err.message && err.message.includes('Auth')) {
+      rpcPassword = null
+      res.status(401).json({ error: 'Authentication failed. Check your password.' })
+    } else {
+      res.status(503).json({ error: 'Could not connect to Game Server. Check if server is running.' })
+    }
   }
 })
 
@@ -446,6 +493,12 @@ app.get('/api/chat/lines', async (_, res) => {
    START
 ========================= */
 
-app.listen(HTTP_PORT, HTTP_HOST, () =>
-  console.log(`Admin API running on http://${HTTP_HOST}:${HTTP_PORT}`)
-)
+app.listen(HTTP_PORT, HTTP_HOST, () => {
+  console.log('\n🚀 Maniaplanet Admin Panel Server Started!')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log(`📍 Local:    http://localhost:${HTTP_PORT}`)
+  console.log(`🌐 Network:  http://${HTTP_HOST}:${HTTP_PORT}`)
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('👉 Open http://localhost:3100 in your browser')
+  console.log('🔐 Enter your maniaplanet Superadmin password to login\n')
+})
