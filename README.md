@@ -44,7 +44,6 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
    const RPC_HOST = '127.0.0.1';
    const RPC_PORT = 5000;
    const RPC_LOGIN = 'SuperAdmin';
-   const RPC_PASSWORD = 'your_password';
    ```
 
 4. Start the panel:
@@ -53,7 +52,7 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
    ```
 
 5. Access the panel:
-   Open `http://localhost:3100` in your browser.
+   Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
 
 ## License
 
