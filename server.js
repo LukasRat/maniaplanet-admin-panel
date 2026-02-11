@@ -33,6 +33,11 @@ const RPC_LOGIN = 'SuperAdmin'
 // FIXED: Use local path to avoid permission issues
 const MAPS_DIR = path.join(__dirname, 'maps_storage')
 
+// Ensure maps storage directory exists
+if (!fs.existsSync(MAPS_DIR)) {
+  fs.mkdirSync(MAPS_DIR, { recursive: true })
+}
+
 /* =========================
    EXPRESS
 ========================= */
