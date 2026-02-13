@@ -7,6 +7,7 @@ const API = `${window.location.origin}/api`  // Use current host instead of hard
 const MANIAPLANET_FORMAT_CODES_PATTERN = /\$(?:[0-9a-fA-F]{1,3}|[wnoitsgzh<>])/g
 const MANIAPLANET_ESCAPE_PATTERN = /\$\$/g  // Escape sequence for literal dollar sign
 const PLACEHOLDER_CHAR = '\uE000'  // Unicode private use character for temporary placeholder
+const PLACEHOLDER_PATTERN = new RegExp(PLACEHOLDER_CHAR, 'g')  // Pattern for restoring literal $
 
 // Application State & Logic
 const app = {
@@ -180,7 +181,7 @@ const app = {
     return text
       .replace(MANIAPLANET_ESCAPE_PATTERN, PLACEHOLDER_CHAR)  // Temporarily replace $$
       .replace(MANIAPLANET_FORMAT_CODES_PATTERN, '')  // Strip all formatting codes
-      .replace(new RegExp(PLACEHOLDER_CHAR, 'g'), '$')  // Restore literal $
+      .replace(PLACEHOLDER_PATTERN, '$')  // Restore literal $
   },
 
   renderDashboard(status) {
