@@ -77,7 +77,7 @@ Drag-and-drop map upload:
 
 ## 🎨 ManiaPlanet Color Code Support
 
-**NEW FEATURE:** The admin panel automatically strips ManiaPlanet formatting codes from all displayed text, ensuring clean and readable names throughout the interface.
+The admin panel automatically strips ManiaPlanet formatting codes from all displayed text, ensuring clean and readable names throughout the interface.
 
 ManiaPlanet uses special formatting codes like:
 - `$F00` - Color codes (hex colors)
@@ -234,7 +234,7 @@ The admin panel includes a server restart feature that uses the `restart.sh` scr
 
 ### Configuring Expansion Restart (Optional)
 
-If you use a ManiaPlanet expansion or controller (separate process that manages your server), you can configure the expansion restart feature:
+If you use a ManiaPlanet expansion or controller (a separate process that manages server modes, plugins, or advanced features), you can configure the expansion restart feature:
 
 1. **Edit the restart_expansion.sh file:**
    ```bash
