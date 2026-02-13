@@ -43,6 +43,12 @@
         <span>ADMIN PANEL</span>
       </div>
 
+      <!-- Connection Status -->
+      <div id="connection-status" class="connection-status">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+        <span>Connecting...</span>
+      </div>
+
       <div class="nav-links">
         <button class="nav-item active" onclick="app.switchTab('dashboard')">
           <i class="fa-solid fa-chart-line"></i> Dashboard
@@ -64,6 +70,12 @@
         </button>
         <button class="nav-item" onclick="app.switchTab('upload')">
           <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+        </button>
+        <button class="nav-item" onclick="app.switchTab('bans')">
+          <i class="fa-solid fa-ban"></i> Bans
+        </button>
+        <button class="nav-item" onclick="app.switchTab('settings')">
+          <i class="fa-solid fa-gear"></i> Settings
         </button>
       </div>
 
@@ -99,6 +111,10 @@
       <section id="tab-players" class="section">
         <h2>Player Management</h2>
         <div class="card">
+          <div class="search-container">
+            <input type="text" id="player-search" class="search-input" placeholder="Search players by name or login..." oninput="app.filterPlayers()">
+            <i class="fa-solid fa-search search-icon"></i>
+          </div>
           <div class="list-header">
             <span>Nickname (Login)</span>
             <span>Actions</span>
@@ -113,6 +129,10 @@
       <section id="tab-maps" class="section">
         <h2>Map Management</h2>
         <div class="card">
+          <div class="search-container">
+            <input type="text" id="map-search" class="search-input" placeholder="Search maps by name..." oninput="app.filterMaps()">
+            <i class="fa-solid fa-search search-icon"></i>
+          </div>
           <div class="list-header">
             <span>Map Name</span>
             <span>Actions</span>
@@ -228,6 +248,60 @@
         </div>
       </section>
 
+      <!-- BANS SECTION -->
+      <section id="tab-bans" class="section">
+        <h2>Ban Management</h2>
+        <div class="card">
+          <div class="card-header">
+            <h3>Banned Players</h3>
+            <button class="btn-danger btn-sm" onclick="app.clearBans()">
+              <i class="fa-solid fa-trash"></i> Clear All Bans
+            </button>
+          </div>
+          <div class="list-header">
+            <span>Login</span>
+            <span>Actions</span>
+          </div>
+          <div id="bans-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS SECTION -->
+      <section id="tab-settings" class="section">
+        <h2>Server Settings</h2>
+        <div class="card">
+          <h3>Configuration</h3>
+          <form id="settings-form" onsubmit="app.saveSettings(event)">
+            <div class="form-group">
+              <label for="setting-server-name">Server Name</label>
+              <input type="text" id="setting-server-name" class="form-input" placeholder="My ManiaPlanet Server">
+            </div>
+            <div class="form-group">
+              <label for="setting-max-players">Max Players</label>
+              <input type="number" id="setting-max-players" class="form-input" min="1" max="200" placeholder="32">
+            </div>
+            <div class="form-group">
+              <label for="setting-max-spectators">Max Spectators</label>
+              <input type="number" id="setting-max-spectators" class="form-input" min="0" max="200" placeholder="32">
+            </div>
+            <div class="form-group">
+              <label for="setting-server-password">Server Password (leave empty for no password)</label>
+              <input type="password" id="setting-server-password" class="form-input" placeholder="Leave empty for public server">
+            </div>
+            <div class="button-group">
+              <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-save"></i> Save Settings
+              </button>
+              <button type="button" class="btn-secondary" onclick="app.loadSettings()">
+                <i class="fa-solid fa-rotate"></i> Reload Current
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -235,6 +309,21 @@
   <div id="status-toast">
     <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
     <span id="toast-message">Action successful</span>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-circle-exclamation" style="color: var(--warning); font-size: 2rem;"></i>
+        <h3 id="confirm-title">Confirm Action</h3>
+      </div>
+      <p id="confirm-message">Are you sure you want to proceed?</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="app.confirmNo()">Cancel</button>
+        <button class="btn-danger" onclick="app.confirmYes()">Confirm</button>
+      </div>
+    </div>
   </div>
 
   <script src="panel.js"></script>
