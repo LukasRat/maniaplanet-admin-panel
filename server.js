@@ -31,14 +31,18 @@ const RPC_PORT = 5000
 const RPC_LOGIN = 'SuperAdmin'
 
 // MAPS_DIR must point to your Maniaplanet server's UserData/Maps directory
+// This is REQUIRED for map uploads to work!
+// 
 // Examples:
-//   Linux: '/home/user/maniaplanetserver/UserData/Maps'
+//   Linux: '/home/user/Desktop/maniaplanetserver/UserData/Maps'
 //   Windows: 'C:\\ManiaPlanetServer\\UserData\\Maps'
 //   Docker: '/server/UserData/Maps'
 // 
-// IMPORTANT: Change this to match your server's actual Maps directory!
-// The admin panel must have write access to this directory.
-const MAPS_DIR = process.env.MANIAPLANET_MAPS_DIR || path.join(__dirname, 'UserData', 'Maps')
+// IMPORTANT: 
+// - This must be the ACTUAL path where your Maniaplanet server's Maps directory is located
+// - The admin panel must have write permissions to this directory
+// - Map files will be saved directly to this directory
+const MAPS_DIR = process.env.MANIAPLANET_MAPS_DIR || '/home/user/Desktop/maniaplanetserver/UserData/Maps'
 
 // Ensure maps directory exists
 if (!fs.existsSync(MAPS_DIR)) {
@@ -265,20 +269,14 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
         const tempPath = file.path
         const finalPath = path.join(MAPS_DIR, validatedName)
 
-        // Move file to final location with original filename (keep local copy)
+        // Move file directly to the server's Maps directory
         fs.renameSync(tempPath, finalPath)
 
-        // Read the map file content
-        const mapContent = fs.readFileSync(finalPath)
-
-        // Upload the map file to the Maniaplanet server using WriteFile RPC
-        // This transfers the file to the server's UserData/Maps directory
-        await rpcCall('WriteFile', [validatedName, mapContent])
-
-        // Small pause to let Maniaplanet process the file
+        // Small pause to let Maniaplanet detect the new file
         await new Promise(r => setTimeout(r, 300))
 
-        // Register map with Maniaplanet server using original filename
+        // Register map with Maniaplanet server
+        // The file is already in the server's Maps directory
         await rpcCall('AddMap', [validatedName])
         added.push(validatedName)
       } catch (e) {

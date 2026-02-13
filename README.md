@@ -49,12 +49,30 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
    const RPC_LOGIN = 'SuperAdmin';
    ```
    
-   **Maps Directory (Optional - for local cache):**
+   **⚠️ CRITICAL: Maps Directory Configuration**
+   
+   You **MUST** configure `MAPS_DIR` to point to your Maniaplanet server's actual UserData/Maps directory:
+   
    ```javascript
-   const MAPS_DIR = process.env.MANIAPLANET_MAPS_DIR || path.join(__dirname, 'UserData', 'Maps')
+   const MAPS_DIR = '/home/user/Desktop/maniaplanetserver/UserData/Maps'
    ```
    
-   The `MAPS_DIR` is used as a local cache for uploaded maps. Maps are automatically uploaded to the Maniaplanet server via the WriteFile RPC method, so you don't need to configure this unless you want to change the local storage location.
+   **Platform-specific examples:**
+   - Linux: `/home/user/Desktop/maniaplanetserver/UserData/Maps`
+   - Windows: `C:\\ManiaPlanetServer\\UserData\\Maps`
+   - Docker: `/server/UserData/Maps` (mount the server's Maps directory)
+   
+   **Using environment variable:**
+   ```bash
+   export MANIAPLANET_MAPS_DIR="/home/user/Desktop/maniaplanetserver/UserData/Maps"
+   npm start
+   ```
+   
+   **Important requirements:**
+   - Path must point to where your Maniaplanet server actually stores maps
+   - Admin panel must have write permissions to this directory
+   - Map files will be saved directly to this location
+   - If path is wrong, map uploads will fail with "Map unknown" errors
 
 4. Start the panel:
    ```bash
@@ -139,28 +157,50 @@ The admin panel includes a server restart feature that uses the `restart.sh` scr
 
 If map uploads fail or show "0 maps uploaded":
 
-1. **Check RPC connection**:
-   - Ensure the ManiaPlanet server is running with XML-RPC enabled
-   - Verify `RPC_HOST` and `RPC_PORT` are correct in `server.js`
-   - Check that you've logged in with the correct SuperAdmin password
+1. **⚠️ Check MAPS_DIR configuration (MOST COMMON ISSUE)**:
+   - Open `server.js` and find the `MAPS_DIR` constant (around line 33)
+   - It **MUST** point to your actual Maniaplanet server's UserData/Maps directory
+   - Default value `/home/user/Desktop/maniaplanetserver/UserData/Maps` is just an example!
+   - Change it to match YOUR server installation path
+   
+   Example for different setups:
+   ```javascript
+   // Linux home directory
+   const MAPS_DIR = '/home/yourname/maniaplanet-server/UserData/Maps'
+   
+   // Windows
+   const MAPS_DIR = 'C:\\ManiaPlanetServer\\UserData\\Maps'
+   
+   // Docker (with volume mount)
+   const MAPS_DIR = '/server/UserData/Maps'
+   ```
 
-2. **Check error messages**:
-   - Open browser console (F12) to see detailed error messages
-   - Check server console for RPC error details
-   - Common errors:
-     - "Map unknown" - Usually means WriteFile failed (check RPC connection)
-     - "Authentication failed" - Wrong password or RPC not enabled
-     - "Connection refused" - Server not running or wrong port
+2. **Verify the directory exists and is writable**:
+   ```bash
+   # Check if directory exists
+   ls -la /path/to/your/ManiaPlanetServer/UserData/Maps
+   
+   # Check permissions
+   ls -ld /path/to/your/ManiaPlanetServer/UserData/Maps
+   
+   # Make it writable if needed
+   chmod 755 /path/to/your/ManiaPlanetServer/UserData/Maps
+   ```
 
-3. **Verify map files**:
-   - Files must have `.gbx` or `.Map.Gbx` extension (case-insensitive)
-   - File size must be under 10MB (configurable in server.js)
-   - Filenames should not contain path traversal attempts (`..`)
+3. **Check for common errors**:
+   - **"Map unknown"** - MAPS_DIR is wrong, file not in server's Maps directory
+   - **"couldn't write file"** - Permission denied or path doesn't exist
+   - **"0 maps uploaded"** - Files saved locally but MAPS_DIR not pointing to server
+   
+4. **Test the configuration**:
+   - Upload a test map
+   - Check if the file appears in your server's UserData/Maps directory
+   - If not, MAPS_DIR is configured incorrectly
 
 **How it works:**
-- Maps are uploaded via the `WriteFile` RPC method directly to the server
-- No filesystem access to the server is required
-- Maps are also stored locally in `UserData/Maps` as a cache
+- Admin panel saves map files directly to the server's Maps directory
+- Then calls AddMap RPC to register them
+- Requires the admin panel to have filesystem access to the server
 
 ### Error: Cannot find module 'express'
 
