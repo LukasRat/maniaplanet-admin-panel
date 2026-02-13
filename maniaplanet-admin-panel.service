@@ -1,0 +1,33 @@
+[Unit]
+Description=ManiaPlanet Admin Panel
+Documentation=https://github.com/LukasRat/maniaplanet-admin-panel
+After=network.target
+
+[Service]
+Type=simple
+User=maniaplanet
+Group=maniaplanet
+WorkingDirectory=/opt/maniaplanet-admin-panel
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=maniaplanet-admin-panel
+
+# Environment variables
+Environment=NODE_ENV=production
+# Uncomment and set your maps directory path
+#Environment=MANIAPLANET_MAPS_DIR=/path/to/maniaplanetserver/UserData/Maps
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/maniaplanet-admin-panel
+# Allow write access to maps directory if different from app directory
+#ReadWritePaths=/path/to/maniaplanetserver/UserData/Maps
+
+[Install]
+WantedBy=multi-user.target

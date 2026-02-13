@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  maniaplanet-admin-panel:
+    build: .
+    container_name: maniaplanet-admin-panel
+    ports:
+      - "3100:3100"
+    environment:
+      - NODE_ENV=production
+      # Set your maps directory path (inside container)
+      - MANIAPLANET_MAPS_DIR=/server/UserData/Maps
+    volumes:
+      # Mount the ManiaPlanet server's Maps directory
+      # Adjust the host path to match your server installation
+      - /path/to/maniaplanetserver/UserData/Maps:/server/UserData/Maps
+      # Optional: Mount logs directory
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - maniaplanet-network
+    # If connecting to a ManiaPlanet server in another container
+    # extra_hosts:
+    #   - "maniaplanet-server:172.17.0.1"
+
+networks:
+  maniaplanet-network:
+    driver: bridge

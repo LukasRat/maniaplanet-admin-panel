@@ -62,6 +62,11 @@ app.get('/', (_, res) =>
   res.sendFile(path.join(__dirname, 'public', 'panel.html'))
 )
 
+// Health check endpoint for monitoring and container health checks
+app.get('/health', (_, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() })
+})
+
 /* =========================
    GBXREMOTE
 ========================= */

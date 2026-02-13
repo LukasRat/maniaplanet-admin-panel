@@ -1,0 +1,5 @@
+# Logs Directory
+
+This directory is used to store application logs when running the admin panel with PM2 or other process managers.
+
+Log files are automatically excluded from git by .gitignore.

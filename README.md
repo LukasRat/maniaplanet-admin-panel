@@ -163,6 +163,211 @@ This ensures a clean, professional appearance while maintaining full compatibili
 5. Access the panel:
    Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
 
+## Running as a Background Service/Daemon
+
+The admin panel can be run as a background daemon that starts automatically on system boot and doesn't depend on a user shell. Choose one of the following methods based on your setup:
+
+### Method 1: systemd Service (Recommended for Linux)
+
+systemd is the standard init system for most modern Linux distributions. This method ensures the admin panel starts automatically on boot and restarts on failure.
+
+#### Quick Installation (Automated)
+
+Run the automated installation script:
+
+```bash
+chmod +x install-systemd.sh
+./install-systemd.sh
+```
+
+The script will:
+- Create a dedicated system user
+- Copy files to `/opt/maniaplanet-admin-panel`
+- Install npm dependencies
+- Create and configure the systemd service
+- Start the service and enable auto-start on boot
+
+#### Manual Setup Instructions
+
+1. **Create a dedicated user** (optional but recommended for security):
+   ```bash
+   sudo useradd -r -s /bin/false maniaplanet
+   ```
+
+2. **Install the application** to a system directory:
+   ```bash
+   sudo mkdir -p /opt/maniaplanet-admin-panel
+   sudo cp -r /path/to/your/maniaplanet-admin-panel/* /opt/maniaplanet-admin-panel/
+   sudo chown -R maniaplanet:maniaplanet /opt/maniaplanet-admin-panel
+   ```
+
+3. **Configure the service file** (`maniaplanet-admin-panel.service`):
+   - Edit the `WorkingDirectory` path if you installed to a different location
+   - Set the `User` and `Group` to match your setup
+   - Uncomment and set `MANIAPLANET_MAPS_DIR` environment variable
+   - Add `ReadWritePaths` for your maps directory if needed
+
+4. **Install the systemd service**:
+   ```bash
+   sudo cp maniaplanet-admin-panel.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   ```
+
+5. **Start and enable the service**:
+   ```bash
+   # Start the service
+   sudo systemctl start maniaplanet-admin-panel
+   
+   # Enable auto-start on boot
+   sudo systemctl enable maniaplanet-admin-panel
+   
+   # Check status
+   sudo systemctl status maniaplanet-admin-panel
+   ```
+
+#### Managing the Service
+
+```bash
+# View logs
+sudo journalctl -u maniaplanet-admin-panel -f
+
+# Restart the service
+sudo systemctl restart maniaplanet-admin-panel
+
+# Stop the service
+sudo systemctl stop maniaplanet-admin-panel
+
+# Disable auto-start
+sudo systemctl disable maniaplanet-admin-panel
+```
+
+### Method 2: PM2 Process Manager (Cross-Platform)
+
+PM2 is a popular Node.js process manager that works on Linux, Windows, and macOS. It provides automatic restarts, log management, and easy monitoring.
+
+#### Setup Instructions
+
+1. **Install PM2 globally**:
+   ```bash
+   npm install -g pm2
+   ```
+
+2. **Configure the ecosystem file** (`ecosystem.config.js`):
+   - Uncomment and set `MANIAPLANET_MAPS_DIR` in the env section
+   - Adjust log file paths if needed
+
+3. **Start the application with PM2**:
+   ```bash
+   # Start using the ecosystem config
+   pm2 start ecosystem.config.js
+   
+   # Save the PM2 process list
+   pm2 save
+   
+   # Set up PM2 to start on system boot
+   pm2 startup
+   # Follow the instructions displayed by the command above
+   ```
+
+#### Managing with PM2
+
+```bash
+# View application status
+pm2 status
+
+# View logs
+pm2 logs maniaplanet-admin-panel
+
+# Restart the application
+pm2 restart maniaplanet-admin-panel
+
+# Stop the application
+pm2 stop maniaplanet-admin-panel
+
+# Remove from PM2
+pm2 delete maniaplanet-admin-panel
+
+# Monitor all PM2 processes
+pm2 monit
+```
+
+### Method 3: Docker / Docker Compose (Containerized)
+
+Docker provides complete isolation and easy deployment. This method is ideal for container-based environments.
+
+#### Setup Instructions
+
+1. **Edit `docker-compose.yml`**:
+   - Update the volumes section to point to your actual ManiaPlanet server's Maps directory
+   - Set the `MANIAPLANET_MAPS_DIR` environment variable
+   - Adjust the port mapping if needed (default: 3100:3100)
+
+2. **Build and start the container**:
+   ```bash
+   # Build and start in detached mode
+   docker-compose up -d
+   
+   # View logs
+   docker-compose logs -f
+   
+   # Check status
+   docker-compose ps
+   ```
+
+3. **The container will**:
+   - Start automatically on system boot (restart: unless-stopped)
+   - Restart automatically on failure
+   - Persist logs to the ./logs directory
+   - Access your ManiaPlanet server's Maps directory
+
+#### Managing the Docker Container
+
+```bash
+# Stop the container
+docker-compose down
+
+# Restart the container
+docker-compose restart
+
+# View logs
+docker-compose logs -f maniaplanet-admin-panel
+
+# Rebuild after code changes
+docker-compose up -d --build
+
+# Execute commands inside the container
+docker-compose exec maniaplanet-admin-panel sh
+```
+
+### Method 4: nohup (Simple Background Process)
+
+For quick setup without installing additional tools:
+
+```bash
+# Start in background
+nohup npm start > adminpanel.log 2>&1 &
+
+# Get the process ID
+echo $!
+
+# View logs
+tail -f adminpanel.log
+
+# Stop (replace PID with actual process ID)
+kill <PID>
+```
+
+**Note:** This method doesn't provide automatic restart or boot startup. Consider using systemd or PM2 for production deployments.
+
+### Choosing the Right Method
+
+| Method | Best For | Auto-Restart | Auto-Start on Boot | Log Management | Cross-Platform |
+|--------|----------|--------------|-------------------|----------------|----------------|
+| systemd | Linux servers | ✅ | ✅ | ✅ (journalctl) | ❌ Linux only |
+| PM2 | Node.js apps | ✅ | ✅ | ✅ (built-in) | ✅ Yes |
+| Docker | Containerized environments | ✅ | ✅ | ✅ (docker logs) | ✅ Yes |
+| nohup | Quick testing | ❌ | ❌ | ⚠️ Manual | ✅ Yes |
+
 ### Configuring Server Restart (Required for Restart Button)
 
 ⚠️ **IMPORTANT**: The "Restart Server" button will NOT work until you configure `restart.sh` for your specific server setup!
