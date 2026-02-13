@@ -160,11 +160,10 @@ const app = {
    * @param {string} text - The text to strip codes from
    * @returns {string} The cleaned text without formatting codes
    */
-  stripManiaPlanetColors(text) {
+  stripManiaPlanetFormatting(text) {
     if (!text) return ''
-    // Strip ManiaPlanet color codes ($xxx where x is hex) and formatting codes ($w, $n, etc.)
-    // Note: Color codes can be 1-3 hex digits (e.g., $F, $F00, $FFF)
-    return text.replace(/\$[0-9a-fA-F]{1,3}/g, '').replace(/\$[wnoitsgz<>]/g, '')
+    // Strip ManiaPlanet codes: color codes ($F, $F00, $FFF) and formatting codes ($w, $n, etc.)
+    return text.replace(/\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g, '')
   },
 
   renderDashboard(status) {
@@ -172,7 +171,7 @@ const app = {
     document.getElementById('stat-maps').textContent = status.maps.length
 
     if (status.currentMap) {
-      const cleanName = this.stripManiaPlanetColors(status.currentMap.Name)
+      const cleanName = this.stripManiaPlanetFormatting(status.currentMap.Name)
       document.getElementById('stat-current').textContent = cleanName
       document.getElementById('stat-current').title = cleanName
     }
@@ -193,7 +192,7 @@ const app = {
       const isNew = !this.state.lastPlayers.includes(p.Login) && this.state.lastPlayers.length > 0
       
       // Get clean nickname, fallback to login if not available
-      const cleanNickName = this.stripManiaPlanetColors(p.NickName) || p.Login
+      const cleanNickName = this.stripManiaPlanetFormatting(p.NickName) || p.Login
 
       const div = document.createElement('div')
       div.className = 'list-item'
@@ -441,7 +440,7 @@ const app = {
       const time = this.formatTime(player.BestTime)
       
       // Get clean nickname, fallback to login if not available
-      const cleanNickName = this.stripManiaPlanetColors(player.NickName) || player.Login
+      const cleanNickName = this.stripManiaPlanetFormatting(player.NickName) || player.Login
 
       div.innerHTML = `
         <div class="ranking-position ${posClass}">#${position}</div>
