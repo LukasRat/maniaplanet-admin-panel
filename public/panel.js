@@ -1,5 +1,14 @@
 const API = `${window.location.origin}/api`  // Use current host instead of hardcoded localhost
 
+// ManiaPlanet formatting code patterns
+// Combined pattern for stripping both color and formatting codes in a single pass
+// Format codes: $w (wide), $n (narrow), $o (bold), $i (italic), $t (uppercase), 
+//               $s (shadow), $g (default), $z (reset), $h (hide), $< (smaller), $> (larger)
+const MANIAPLANET_FORMAT_CODES_PATTERN = /\$(?:[0-9a-fA-F]{1,3}|[wnoitsgzh<>])/g
+const MANIAPLANET_ESCAPE_PATTERN = /\$\$/g  // Escape sequence for literal dollar sign
+const PLACEHOLDER_CHAR = '\uE000'  // Unicode private use character for temporary placeholder
+const PLACEHOLDER_PATTERN = new RegExp(PLACEHOLDER_CHAR, 'g')  // Pattern for restoring literal $
+
 // Application State & Logic
 const app = {
   state: {
@@ -153,12 +162,34 @@ const app = {
 
   // --- Renderers ---
 
+  /**
+   * Strips ManiaPlanet formatting codes from text
+   * Removes color codes and special formatting codes:
+   * - Color codes: $F, $F00, $FFF (hex digits, 1-3 length)
+   * - Formatting codes: $w (wide), $n (narrow), $o (bold), $i (italic), 
+   *   $t (uppercase), $s (shadow), $g (default), $z (reset), $h (hide),
+   *   $< (smaller), $> (larger)
+   * - Escape sequence: $$ (literal dollar sign, replaced with single $)
+   * @param {string} text - The text to strip codes from
+   * @returns {string} The cleaned text without formatting codes
+   */
+  stripManiaPlanetFormatting(text) {
+    if (!text) return ''
+    // First replace $$ (escape for literal $) with a temporary placeholder
+    // Then strip ManiaPlanet formatting codes
+    // Finally restore literal dollar signs
+    return text
+      .replace(MANIAPLANET_ESCAPE_PATTERN, PLACEHOLDER_CHAR)  // Temporarily replace $$
+      .replace(MANIAPLANET_FORMAT_CODES_PATTERN, '')  // Strip all formatting codes
+      .replace(PLACEHOLDER_PATTERN, '$')  // Restore literal $
+  },
+
   renderDashboard(status) {
     document.getElementById('stat-players').textContent = status.players.length
     document.getElementById('stat-maps').textContent = status.maps.length
 
     if (status.currentMap) {
-      const cleanName = status.currentMap.Name.replace(/\$[0-9a-fA-F]{1,3}/g, '') // Strip color codes roughly
+      const cleanName = this.stripManiaPlanetFormatting(status.currentMap.Name)
       document.getElementById('stat-current').textContent = cleanName
       document.getElementById('stat-current').title = cleanName
     }
@@ -177,13 +208,17 @@ const app = {
 
     players.forEach(p => {
       const isNew = !this.state.lastPlayers.includes(p.Login) && this.state.lastPlayers.length > 0
+      
+      // Get clean nickname, fallback to login if not available
+      const cleanNickName = this.stripManiaPlanetFormatting(p.NickName) || p.Login
 
       const div = document.createElement('div')
       div.className = 'list-item'
 
       div.innerHTML = `
                 <div class="item-info">
-                    <span class="player-login">${p.Login}</span>
+                    <span class="player-login">${this.escapeHtml(cleanNickName)}</span>
+                    <span class="player-login-name">(${this.escapeHtml(p.Login)})</span>
                     ${isNew ? '<span class="badge new">NEW</span>' : ''}
                 </div>
                 <div class="actions">
@@ -212,7 +247,7 @@ const app = {
       div.className = 'list-item'
       if (isCurrent) div.style.background = 'rgba(108, 92, 231, 0.1)'
 
-      const cleanName = file.replace(/\.Map\.Gbx$/i, '')
+      const cleanName = file.replace(/\.(Map\.)?Gbx$/i, '')
 
       div.innerHTML = `
                 <div class="item-info">
@@ -291,6 +326,75 @@ const app = {
     setTimeout(() => this.refresh(), 1000)
   },
 
+  async restartServer() {
+    if (!confirm('Restart the game server? This will disconnect all players temporarily.')) return
+    try {
+      const response = await fetch(`${API}/server/restart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        // Show detailed error message
+        let errorMsg = data.error || 'Restart failed'
+        if (data.details) {
+          // Show configuration error details
+          console.error('Restart script output:', data.details)
+          errorMsg += '\n\nThe restart.sh script needs to be configured for your server.'
+          errorMsg += '\nCheck the browser console or server logs for details.'
+        }
+        throw new Error(errorMsg)
+      }
+      
+      this.showToast(data.message || 'Server restarting...')
+      
+      // Stop auto-refresh as server will be unavailable
+      if (this.state.autoRefresh) {
+        clearInterval(this.state.autoRefresh)
+        this.state.autoRefresh = null
+      }
+      
+      // Show message about reconnection
+      setTimeout(() => {
+        this.showToast('Server is restarting. You may need to reconnect.', 'error')
+      }, 3000)
+    } catch (err) {
+      this.showToast(err.message || 'Failed to restart server', 'error')
+    }
+  },
+
+  async restartExpansion() {
+    if (!confirm('Restart the expansion (server controller)?')) return
+    try {
+      const response = await fetch(`${API}/server/restart-expansion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        // Show detailed error message
+        let errorMsg = data.error || 'Expansion restart failed'
+        if (data.details) {
+          // Show configuration error details
+          console.error('Expansion restart script output:', data.details)
+          errorMsg += '\n\nCheck the browser console or server logs for details.'
+        }
+        throw new Error(errorMsg)
+      }
+      
+      this.showToast(data.message || 'Expansion restarting...')
+      
+      // Refresh after a short delay
+      setTimeout(() => this.refresh(), 2000)
+    } catch (err) {
+      this.showToast(err.message || 'Failed to restart expansion', 'error')
+    }
+  },
+
   // --- Enhanced Player Actions ---
 
   async spectate(login) {
@@ -330,7 +434,8 @@ const app = {
   // --- Renderers for New Features ---
 
   renderServerInfo(info) {
-    document.getElementById('server-name').textContent = info.serverName || '-'
+    const cleanServerName = this.stripManiaPlanetFormatting(info.serverName) || '-'
+    document.getElementById('server-name').textContent = cleanServerName
     document.getElementById('server-version').textContent = info.version?.Version || '-'
     document.getElementById('server-max-players').textContent = info.maxPlayers || '-'
     document.getElementById('server-max-spectators').textContent = info.maxSpectators || '-'
@@ -352,10 +457,16 @@ const app = {
       const position = index + 1
       const posClass = position <= 3 ? 'top3' : ''
       const time = this.formatTime(player.BestTime)
+      
+      // Get clean nickname, fallback to login if not available
+      const cleanNickName = this.stripManiaPlanetFormatting(player.NickName) || player.Login
 
       div.innerHTML = `
         <div class="ranking-position ${posClass}">#${position}</div>
-        <div class="ranking-player">${player.Login}</div>
+        <div class="ranking-player">
+          ${this.escapeHtml(cleanNickName)}
+          <span class="player-login-name">(${this.escapeHtml(player.Login)})</span>
+        </div>
         <div class="ranking-time">${time}</div>
       `
       list.appendChild(div)
@@ -453,16 +564,17 @@ const app = {
       status.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...'
 
       const form = new FormData()
+      const pattern = /\.(map\.)?gbx$/i
       let count = 0
       for (let i = 0; i < files.length; i++) {
-        if (files[i].name.endsWith('.Map.Gbx')) {
+        if (pattern.test(files[i].name)) {
           form.append('map', files[i])
           count++
         }
       }
 
       if (count === 0) {
-        status.textContent = 'No .Map.Gbx files found'
+        status.textContent = 'No .gbx or .Map.Gbx files found (any capitalization accepted)'
         this.showToast('Invalid file type', 'error')
         return
       }
@@ -475,8 +587,29 @@ const app = {
 
         if (res.ok) {
           const data = await res.json()
-          status.innerHTML = `<span style="color: var(--success)">Successfully uploaded ${data.maps.length} maps</span>`
-          this.showToast(`Uploaded ${data.maps.length} maps`)
+          const total = (data.maps?.length || 0) + (data.skipped?.length || 0)
+          const newMaps = data.maps?.length || 0
+          const skipped = data.skipped?.length || 0
+          
+          let message = ''
+          if (total > 0) {
+            if (newMaps > 0 && skipped > 0) {
+              const mapsWord = total === 1 ? 'map' : 'maps'
+              const existedWord = skipped === 1 ? 'already existed' : 'already existed'
+              message = `Successfully uploaded ${total} ${mapsWord} (${newMaps} new, ${skipped} ${existedWord})`
+            } else if (newMaps > 0) {
+              const mapsWord = newMaps === 1 ? 'map' : 'maps'
+              message = `Successfully uploaded ${newMaps} new ${mapsWord}`
+            } else if (skipped > 0) {
+              const mapsWord = skipped === 1 ? 'map' : 'maps'
+              message = `${skipped} ${mapsWord} already existed in playlist`
+            }
+          } else {
+            message = 'No maps uploaded'
+          }
+          
+          status.innerHTML = `<span style="color: var(--success)">${message}</span>`
+          this.showToast(message)
           setTimeout(() => status.innerHTML = '', 4000)
           this.refresh()
         } else {

@@ -7,8 +7,12 @@ const express = require('express')
 const cors = require('cors')
 const path = require('path')
 const fs = require('fs')
+const fsPromises = require('fs').promises
 const multer = require('multer')
 const gbxremote = require('gbxremote')
+const { exec } = require('child_process')
+const util = require('util')
+const execPromise = util.promisify(exec)
 
 // Handle unhandled promise rejections to prevent server crashes
 process.on('unhandledRejection', (reason, promise) => {
@@ -26,8 +30,24 @@ const RPC_HOST = '127.0.0.1'
 const RPC_PORT = 5000
 const RPC_LOGIN = 'SuperAdmin'
 
-// FIXED: Use local path to avoid permission issues
-const MAPS_DIR = path.join(__dirname, 'maps_storage')
+// MAPS_DIR must point to your Maniaplanet server's UserData/Maps directory
+// This is REQUIRED for map uploads to work!
+// 
+// Examples:
+//   Linux: '/home/user/Desktop/maniaplanetserver/UserData/Maps'
+//   Windows: 'C:\\ManiaPlanetServer\\UserData\\Maps'
+//   Docker: '/server/UserData/Maps'
+// 
+// IMPORTANT: 
+// - This must be the ACTUAL path where your Maniaplanet server's Maps directory is located
+// - The admin panel must have write permissions to this directory
+// - Map files will be saved directly to this directory
+const MAPS_DIR = process.env.MANIAPLANET_MAPS_DIR || '/home/user/Desktop/maniaplanetserver/UserData/Maps'
+
+// Ensure maps directory exists
+if (!fs.existsSync(MAPS_DIR)) {
+  fs.mkdirSync(MAPS_DIR, { recursive: true })
+}
 
 /* =========================
    EXPRESS
@@ -106,6 +126,29 @@ async function rpcCall(method, params = []) {
    HELPERS
 ========================= */
 
+function validateFilename(filename) {
+  // Validate the extension
+  if (!/\.(?:Map\.)?Gbx$/i.test(filename)) {
+    throw new Error('Invalid map file extension. File must end with .gbx or .Map.Gbx')
+  }
+  
+  // Use basename to strip any path components (security: prevent directory traversal)
+  const basename = path.basename(filename)
+  
+  // Check for dangerous patterns (path traversal attempts)
+  if (basename.includes('..') || basename !== filename) {
+    throw new Error('Invalid filename: path traversal detected')
+  }
+  
+  // Ensure filename is not empty or just dots
+  if (!basename || /^\.+$/.test(basename)) {
+    throw new Error('Invalid filename')
+  }
+  
+  // Return the original filename (Maniaplanet needs exact filename)
+  return basename
+}
+
 async function ensureMapInPool(file) {
   const maps = await rpcCall('GetChallengeList', [1000, 0])
   const exists = maps.some(m => m.FileName === file)
@@ -117,6 +160,9 @@ async function ensureMapInPool(file) {
 ========================= */
 const upload = multer({
   dest: MAPS_DIR,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit for map files
+  }
 })
 
 
@@ -181,7 +227,7 @@ app.get('/api/maps/files', (_, res) => {
       fs.mkdirSync(MAPS_DIR, { recursive: true })
     }
     const files = fs.readdirSync(MAPS_DIR)
-      .filter(f => f.endsWith('.Map.Gbx'))
+      .filter(f => /\.(map\.)?gbx$/i.test(f))
       .sort()
 
     res.json(files)
@@ -212,29 +258,48 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
     }
 
     const added = []
+    const skipped = []
+    const errors = []
 
     for (const file of req.files) {
-      const temp = file.path
-      const final = path.join(MAPS_DIR, file.originalname)
-
-      fs.renameSync(temp, final)
-
-      // kleine Pause, damit Maniaplanet sauber nachkommt
-      await new Promise(r => setTimeout(r, 300))
-
       try {
-        await rpcCall('AddMap', [file.originalname])
-        added.push(file.originalname)
+        // Validate filename for security (but don't modify it)
+        // Maniaplanet needs the exact original filename
+        const validatedName = validateFilename(file.originalname)
+        
+        const tempPath = file.path
+        const finalPath = path.join(MAPS_DIR, validatedName)
+
+        // Move file directly to the server's Maps directory
+        fs.renameSync(tempPath, finalPath)
+
+        // Small pause to let Maniaplanet detect the new file
+        await new Promise(r => setTimeout(r, 300))
+
+        // Check if map already exists in playlist before adding
+        const maps = await rpcCall('GetChallengeList', [1000, 0])
+        const exists = maps.some(m => m.FileName === validatedName)
+        
+        if (exists) {
+          // Map already in playlist, but file was uploaded successfully
+          skipped.push(validatedName)
+          console.log(`Map ${validatedName} already in playlist, skipped AddMap`)
+        } else {
+          // Register map with Maniaplanet server
+          await rpcCall('AddMap', [validatedName])
+          added.push(validatedName)
+        }
       } catch (e) {
-        console.error("Could not add map to server (maybe offline)", e)
-        // We still uploaded it, so we count it
-        added.push(file.originalname)
+        console.error(`Could not add map ${file.originalname} to server:`, e.message)
+        errors.push({ file: file.originalname, error: e.message })
       }
     }
 
     res.json({
       ok: true,
-      maps: added
+      maps: added,
+      skipped: skipped,
+      errors: errors
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -295,6 +360,120 @@ app.post('/api/server/restart-map', async (_, res) => {
   try {
     await rpcCall('RestartMap')
     res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/server/restart', async (_, res) => {
+  try {
+    // Execute the restart.sh script
+    const scriptPath = path.join(__dirname, 'restart.sh')
+    
+    // Check if restart.sh exists
+    if (!fs.existsSync(scriptPath)) {
+      return res.status(500).json({ 
+        error: 'restart.sh script not found. Please create and configure the restart script.' 
+      })
+    }
+    
+    // Check if the script is executable
+    try {
+      fs.accessSync(scriptPath, fs.constants.X_OK)
+    } catch (err) {
+      return res.status(500).json({
+        error: 'restart.sh script is not executable. Run: chmod +x restart.sh'
+      })
+    }
+    
+    // Execute the script and capture output
+    try {
+      const { stdout, stderr } = await execPromise(scriptPath)
+      
+      // Log the output
+      console.log('=== Restart Script Success ===')
+      console.log(stdout)
+      if (stderr) console.log('stderr:', stderr)
+      console.log('==============================')
+      
+      res.json({ 
+        ok: true, 
+        message: 'Server restart completed successfully.',
+        output: stdout
+      })
+    } catch (error) {
+      // Script failed - this is expected if not configured
+      const output = error.stdout || error.stderr || error.message
+      
+      console.log('=== Restart Script Failed ===')
+      console.log('Exit code:', error.code)
+      console.log('Output:', output)
+      console.log('=============================')
+      
+      // Return error with the script's output so user knows what to configure
+      return res.status(500).json({ 
+        error: 'Restart script not configured or failed. Please configure restart.sh for your server setup.',
+        details: output,
+        exitCode: error.code
+      })
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/server/restart-expansion', async (_, res) => {
+  try {
+    // Execute the restart_expansion.sh script
+    const scriptPath = path.join(__dirname, 'restart_expansion.sh')
+    
+    // Check if restart_expansion.sh exists
+    if (!fs.existsSync(scriptPath)) {
+      return res.status(500).json({ 
+        error: 'restart_expansion.sh script not found. Please create the expansion restart script.' 
+      })
+    }
+    
+    // Check if the script is executable
+    try {
+      fs.accessSync(scriptPath, fs.constants.X_OK)
+    } catch (err) {
+      return res.status(500).json({
+        error: 'restart_expansion.sh script is not executable. Run: chmod +x restart_expansion.sh'
+      })
+    }
+    
+    // Execute the script and capture output
+    try {
+      const { stdout, stderr } = await execPromise(scriptPath)
+      
+      // Log the output
+      console.log('=== Expansion Restart Script Success ===')
+      console.log(stdout)
+      if (stderr) console.log('stderr:', stderr)
+      console.log('=========================================')
+      
+      res.json({ 
+        ok: true, 
+        message: 'Expansion restart completed successfully.',
+        output: stdout
+      })
+    } catch (error) {
+      // Script failed
+      const output = error.stdout || error.stderr || error.message
+      
+      console.log('=== Expansion Restart Script Failed ===')
+      console.log('Exit code:', error.code)
+      console.log('Output:', output)
+      console.log('========================================')
+      
+      // Return error with the script's output
+      return res.status(500).json({ 
+        error: 'Expansion restart script failed. Check server logs for details.',
+        details: output,
+        exitCode: error.code
+      })
+    }
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
