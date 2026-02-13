@@ -576,3 +576,220 @@ input:focus {
   font-family: var(--font-mono);
   color: var(--text-muted);
 }
+
+/* =========================
+   MOBILE RESPONSIVE STYLES
+========================= */
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+  }
+
+  #app-container {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    flex-direction: column;
+  }
+
+  /* Mobile Sidebar */
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 15px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow-x: auto;
+  }
+
+  .app-title {
+    width: 100%;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    justify-content: center;
+  }
+
+  .nav-links {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .nav-item.active {
+    border-right: none;
+    border-bottom: 3px solid var(--accent);
+    border-radius: 6px 6px 0 0;
+  }
+
+  .logout-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    justify-content: center;
+  }
+
+  /* Content Area */
+  .content {
+    padding: 15px;
+    height: auto;
+  }
+
+  /* Typography */
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+  }
+
+  /* Cards */
+  .card {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  /* Server Info Grid */
+  .server-info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Button Groups */
+  .button-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .button-group button {
+    width: 100%;
+    min-width: 100%;
+    padding: 12px 16px;
+    justify-content: center;
+  }
+
+  /* List Items */
+  .list-header {
+    font-size: 0.75rem;
+  }
+
+  .list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 15px 0;
+  }
+
+  .item-info {
+    width: 100%;
+  }
+
+  .player-login {
+    font-size: 0.9rem;
+  }
+
+  /* Rankings */
+  .ranking-item {
+    grid-template-columns: 50px 1fr 100px;
+    gap: 10px;
+    padding: 10px 0;
+  }
+
+  .ranking-position {
+    font-size: 1rem;
+  }
+
+  .ranking-player {
+    font-size: 0.9rem;
+  }
+
+  .ranking-time {
+    font-size: 0.85rem;
+  }
+
+  /* Chat */
+  .chat-container {
+    height: 300px;
+  }
+
+  .chat-messages {
+    padding: 10px;
+  }
+
+  .chat-input-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .chat-input {
+    width: 100%;
+  }
+
+  .chat-input-container .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Upload Zone */
+  .upload-zone {
+    padding: 30px 20px;
+  }
+
+  .upload-icon {
+    font-size: 2.5rem;
+  }
+
+  /* Login Card */
+  .login-card {
+    max-width: 90%;
+    padding: 30px 20px;
+  }
+
+  /* Buttons - Larger touch targets */
+  button {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .btn-sm {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Inputs - Larger touch targets */
+  input,
+  select {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Toast */
+  #status-toast {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    font-size: 0.9rem;
+  }
+}
