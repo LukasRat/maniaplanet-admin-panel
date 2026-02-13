@@ -739,6 +739,14 @@ const app = {
         password: document.getElementById('setting-server-password').value || ''
       }
       
+      // Don't send undefined values
+      if (settings.maxPlayers === 0 || isNaN(settings.maxPlayers)) {
+        settings.maxPlayers = undefined
+      }
+      if (settings.maxSpectators === 0 || isNaN(settings.maxSpectators)) {
+        settings.maxSpectators = undefined
+      }
+      
       await this.post('/server/settings', settings)
       this.showToast('Settings saved successfully')
       

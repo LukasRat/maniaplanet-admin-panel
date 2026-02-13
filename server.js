@@ -672,7 +672,7 @@ app.get('/api/chat/lines', async (_, res) => {
    BAN MANAGEMENT
 ========================= */
 
-app.get('/api/bans/list', async (_, res) => {
+app.get('/api/bans/list', async (req, res) => {
   try {
     const banList = await rpcCall('GetBanList', [1000, 0])
     res.json(banList)
@@ -691,7 +691,7 @@ app.post('/api/bans/unban', async (req, res) => {
   }
 })
 
-app.post('/api/bans/clear', async (_, res) => {
+app.post('/api/bans/clear', async (req, res) => {
   try {
     await rpcCall('CleanBanList')
     res.json({ ok: true })
