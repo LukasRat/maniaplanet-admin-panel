@@ -852,3 +852,49 @@ const app = {
 
 // Make app global for HTML onclick handlers
 window.app = app
+
+// Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl+R: Manual refresh (prevent default page reload)
+  if (e.ctrlKey && e.key === 'r') {
+    e.preventDefault()
+    if (app.state.autoRefresh) {
+      app.refresh()
+      app.showToast('Data refreshed', 'success')
+    }
+  }
+  
+  // Ctrl+/: Focus search input
+  if (e.ctrlKey && e.key === '/') {
+    e.preventDefault()
+    const currentTab = app.state.currentTab
+    if (currentTab === 'players') {
+      document.getElementById('player-search')?.focus()
+    } else if (currentTab === 'maps') {
+      document.getElementById('map-search')?.focus()
+    }
+  }
+  
+  // Escape: Close modal or clear search
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('confirm-modal')
+    if (modal.classList.contains('show')) {
+      app.confirmNo()
+    } else {
+      const currentTab = app.state.currentTab
+      if (currentTab === 'players') {
+        const searchInput = document.getElementById('player-search')
+        if (searchInput && searchInput.value) {
+          searchInput.value = ''
+          app.filterPlayers()
+        }
+      } else if (currentTab === 'maps') {
+        const searchInput = document.getElementById('map-search')
+        if (searchInput && searchInput.value) {
+          searchInput.value = ''
+          app.filterMaps()
+        }
+      }
+    }
+  }
+})

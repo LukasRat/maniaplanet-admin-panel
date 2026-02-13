@@ -7,14 +7,20 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 ## Features
 
 - 🌑 **Modern UI:** Dark theme with glassmorphism and neon accents.
-- 📊 **Real-time Dashboard:** Live overview of server status, map info, and players.
-- 🏎️ **Map Management:** Drag-and-drop map uploads, pool shuffling, and removal.
-- 👥 **Player Controls:** Kick, Ban, Mute, or Spectate players directly from the UI.
+- 📊 **Real-time Dashboard:** Live overview of server status, map info, players, and banned players count.
+- 🏎️ **Map Management:** Drag-and-drop map uploads, pool shuffling, and removal with search/filter.
+- 👥 **Player Controls:** Kick, Ban, Mute, or Spectate players directly from the UI with search/filter.
+- 🚫 **Ban Management:** View all banned players, unban individuals, or clear all bans at once.
+- ⚙️ **Server Settings:** Configure server name, max players, spectators, and password from the UI.
 - 🕒 **Live Rankings:** Real-time session rankings with accurate best times.
 - 💬 **Integrated Chat:** Full server chat integration with ManiaPlanet formatting support.
 - 🎨 **Clean Display:** Automatically strips ManiaPlanet color codes from names for clean, readable text.
 - 🔄 **Server Controls:** Restart server, restart map, skip map, and shuffle map pool.
 - ⚡ **Expansion Support:** Dedicated restart functionality for ManiaPlanet expansion/controller.
+- 🔍 **Search & Filter:** Real-time search for players and maps.
+- 📡 **Connection Status:** Live indicator showing server connection state.
+- ⌨️ **Keyboard Shortcuts:** Quick actions with keyboard shortcuts (Ctrl+R to refresh, Ctrl+/ to search).
+- ✨ **Better UX:** Custom confirmation dialogs instead of browser alerts.
 
 ## UI Overview
 
@@ -25,6 +31,7 @@ Real-time overview showing:
 - **Players Online** - Current player count
 - **Maps in Pool** - Total maps available
 - **Current Map** - Active map being played
+- **Banned Players** - Number of players currently banned
 
 ![Dashboard][dashboard-screenshot]
 
@@ -41,18 +48,33 @@ Server information display:
 - Version information
 - Maximum players and spectators
 
+**NEW: Server Settings Editor**
+- Edit server name without restarting
+- Adjust max players and spectators on-the-fly
+- Update server password
+- All changes apply immediately
+
 ### 👥 Player Management
 Full player control capabilities:
 - **Kick** - Remove player from server
 - **Ban** - Permanently ban a player
 - **Spectate** - Force player to spectator mode
+- **Search** - Real-time search by player name or login
 - View player nicknames with clean formatting (color codes automatically stripped)
+
+### 🚫 Ban Management
+Comprehensive ban control:
+- **View All Bans** - See complete list of banned players
+- **Unban** - Remove individual bans
+- **Clear All** - Remove all bans at once
+- Ban count displayed on dashboard
 
 ### 🗺️ Map Pool Management
 Advanced map management features:
 - View all maps in the current pool
 - **Queue Maps** - Set next map to play
 - **Remove Maps** - Delete maps from rotation
+- **Search** - Real-time search by map name
 - See which map is currently active
 - Identify maps not in pool vs. maps only in pool
 
@@ -74,6 +96,18 @@ Drag-and-drop map upload:
 - Automatic `.gbx` file detection
 - Direct integration with map pool
 - Upload status feedback
+
+## ⌨️ Keyboard Shortcuts
+
+The admin panel supports keyboard shortcuts for faster navigation and actions:
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl + R` | Manually refresh all data |
+| `Ctrl + /` | Focus search input (on Players or Maps tab) |
+| `Esc` | Close confirmation modal or clear search input |
+
+> **Tip:** Shortcuts are displayed in the Settings tab for easy reference.
 
 ## 🎨 ManiaPlanet Color Code Support
 
