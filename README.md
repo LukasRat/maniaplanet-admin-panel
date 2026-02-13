@@ -2,7 +2,7 @@
 
 A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers (Stadium).
 
-![Dashboard](https://github.com/user-attachments/assets/44459f92-0f7d-4a98-ad39-57e93b9a0598)
+![Dashboard][dashboard-screenshot]
 
 ## Features
 
@@ -26,7 +26,7 @@ Real-time overview showing:
 - **Maps in Pool** - Total maps available
 - **Current Map** - Active map being played
 
-![Dashboard](https://github.com/user-attachments/assets/44459f92-0f7d-4a98-ad39-57e93b9a0598)
+![Dashboard][dashboard-screenshot]
 
 ### 🎮 Server Management
 Complete server control including:
@@ -364,3 +364,6 @@ MIT
 
 ## Support 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P81TXQBY)
+
+<!-- Reference Links -->
+[dashboard-screenshot]: https://github.com/user-attachments/assets/44459f92-0f7d-4a98-ad39-57e93b9a0598
