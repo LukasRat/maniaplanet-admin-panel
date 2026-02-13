@@ -30,10 +30,17 @@ const RPC_HOST = '127.0.0.1'
 const RPC_PORT = 5000
 const RPC_LOGIN = 'SuperAdmin'
 
-// FIXED: Use local path to avoid permission issues
-const MAPS_DIR = path.join(__dirname, 'maps_storage')
+// MAPS_DIR must point to your Maniaplanet server's UserData/Maps directory
+// Examples:
+//   Linux: '/home/user/maniaplanetserver/UserData/Maps'
+//   Windows: 'C:\\ManiaPlanetServer\\UserData\\Maps'
+//   Docker: '/server/UserData/Maps'
+// 
+// IMPORTANT: Change this to match your server's actual Maps directory!
+// The admin panel must have write access to this directory.
+const MAPS_DIR = process.env.MANIAPLANET_MAPS_DIR || path.join(__dirname, 'UserData', 'Maps')
 
-// Ensure maps storage directory exists
+// Ensure maps directory exists
 if (!fs.existsSync(MAPS_DIR)) {
   fs.mkdirSync(MAPS_DIR, { recursive: true })
 }
@@ -266,35 +273,18 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
         // Sanitize the filename to prevent path traversal attacks
         const sanitizedName = sanitizeFilename(file.originalname)
         
-        const temp = file.path
-        const final = path.join(MAPS_DIR, sanitizedName)
+        const tempPath = file.path
+        const finalPath = path.join(MAPS_DIR, sanitizedName)
 
-        await fsPromises.rename(temp, final)
+        // Move file to final location (restore original filename)
+        fs.renameSync(tempPath, finalPath)
 
-        // kleine Pause, damit Maniaplanet sauber nachkommt
+        // Small pause to let Maniaplanet process
         await new Promise(r => setTimeout(r, 300))
 
-        try {
-          // Read the map file content asynchronously
-          const mapContent = await fsPromises.readFile(final)
-          
-          // Upload the map file to the server using WriteFile
-          // The file path is relative to UserData/Maps directory
-          // The gbxremote library handles binary data encoding automatically
-          await rpcCall('WriteFile', [sanitizedName, mapContent])
-          
-          // Now add the map to the server pool
-          await rpcCall('AddMap', [sanitizedName])
-          added.push(sanitizedName)
-        } catch (rpcError) {
-          // Clean up local file if server upload/add failed
-          try {
-            await fsPromises.unlink(final)
-          } catch (unlinkError) {
-            console.error(`Failed to delete local file ${sanitizedName} after server upload failed (original: ${file.originalname}):`, unlinkError.message)
-          }
-          throw new Error(`Server error: ${rpcError.message}`)
-        }
+        // Register map with Maniaplanet server
+        await rpcCall('AddMap', [sanitizedName])
+        added.push(sanitizedName)
       } catch (e) {
         console.error(`Could not add map ${file.originalname} to server:`, e.message)
         errors.push({ file: file.originalname, error: e.message })

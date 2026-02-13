@@ -40,12 +40,29 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
    ```
    > **Note:** This installs Express, gbxremote, and other required packages. If you skip this step, you'll get "Cannot find module 'express'" errors.
 
-3. Configure your server:
-   Edit `server.js` and update the constants at the top:
+3. **Configure your server** - Edit `server.js` and update the constants at the top:
+   
+   **RPC Connection Settings:**
    ```javascript
    const RPC_HOST = '127.0.0.1';
    const RPC_PORT = 5000;
    const RPC_LOGIN = 'SuperAdmin';
+   ```
+   
+   **Maps Directory (IMPORTANT for map uploads!):**
+   ```javascript
+   const MAPS_DIR = '/path/to/your/ManiaPlanetServer/UserData/Maps'
+   ```
+   
+   The `MAPS_DIR` **must** point to your actual ManiaPlanet server's UserData/Maps directory. Examples:
+   - Linux: `/home/user/maniaplanetserver/UserData/Maps`
+   - Windows: `C:\\ManiaPlanetServer\\UserData\\Maps`
+   - Docker: `/server/UserData/Maps`
+   
+   Alternatively, set the `MANIAPLANET_MAPS_DIR` environment variable:
+   ```bash
+   export MANIAPLANET_MAPS_DIR="/path/to/ManiaPlanetServer/UserData/Maps"
+   npm start
    ```
 
 4. Start the panel:
@@ -126,6 +143,31 @@ The admin panel includes a server restart feature that uses the `restart.sh` scr
 **Note:** The admin panel (Node.js) runs separately from your ManiaPlanet game server. This script restarts the **game server**, not the admin panel.
 
 ## Troubleshooting
+
+### Map Upload Not Working
+
+If map uploads fail or show "0 maps uploaded":
+
+1. **Check MAPS_DIR configuration**:
+   - The `MAPS_DIR` in `server.js` must point to your actual ManiaPlanet server's `UserData/Maps` directory
+   - The path must be absolute, not relative
+   - The admin panel process must have write permissions to this directory
+
+2. **Verify the path exists**:
+   ```bash
+   ls -la /path/to/your/ManiaPlanetServer/UserData/Maps
+   ```
+
+3. **Check permissions**:
+   ```bash
+   # The user running the admin panel needs write access
+   chmod 755 /path/to/your/ManiaPlanetServer/UserData/Maps
+   ```
+
+4. **Common mistakes**:
+   - ❌ Using a relative path like `./maps_storage`
+   - ❌ Using a local directory instead of the server's Maps directory
+   - ✅ Using the full path to your ManiaPlanet server's UserData/Maps directory
 
 ### Error: Cannot find module 'express'
 
