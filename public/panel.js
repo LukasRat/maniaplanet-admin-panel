@@ -1,5 +1,14 @@
 const API = `${window.location.origin}/api`  // Use current host instead of hardcoded localhost
 
+// ManiaPlanet formatting code patterns
+// Combined pattern for stripping both color and formatting codes in a single pass
+// Format codes: $w (wide), $n (narrow), $o (bold), $i (italic), $t (uppercase), 
+//               $s (shadow), $g (default), $z (reset), $h (hide), $< (smaller), $> (larger)
+const MANIAPLANET_FORMAT_CODES_PATTERN = /\$(?:[0-9a-fA-F]{1,3}|[wnoitsgzh<>])/g
+const MANIAPLANET_ESCAPE_PATTERN = /\$\$/g  // Escape sequence for literal dollar sign
+const PLACEHOLDER_CHAR = '\uE000'  // Unicode private use character for temporary placeholder
+const PLACEHOLDER_PATTERN = new RegExp(PLACEHOLDER_CHAR, 'g')  // Pattern for restoring literal $
+
 // Application State & Logic
 const app = {
   state: {
@@ -153,12 +162,34 @@ const app = {
 
   // --- Renderers ---
 
+  /**
+   * Strips ManiaPlanet formatting codes from text
+   * Removes color codes and special formatting codes:
+   * - Color codes: $F, $F00, $FFF (hex digits, 1-3 length)
+   * - Formatting codes: $w (wide), $n (narrow), $o (bold), $i (italic), 
+   *   $t (uppercase), $s (shadow), $g (default), $z (reset), $h (hide),
+   *   $< (smaller), $> (larger)
+   * - Escape sequence: $$ (literal dollar sign, replaced with single $)
+   * @param {string} text - The text to strip codes from
+   * @returns {string} The cleaned text without formatting codes
+   */
+  stripManiaPlanetFormatting(text) {
+    if (!text) return ''
+    // First replace $$ (escape for literal $) with a temporary placeholder
+    // Then strip ManiaPlanet formatting codes
+    // Finally restore literal dollar signs
+    return text
+      .replace(MANIAPLANET_ESCAPE_PATTERN, PLACEHOLDER_CHAR)  // Temporarily replace $$
+      .replace(MANIAPLANET_FORMAT_CODES_PATTERN, '')  // Strip all formatting codes
+      .replace(PLACEHOLDER_PATTERN, '$')  // Restore literal $
+  },
+
   renderDashboard(status) {
     document.getElementById('stat-players').textContent = status.players.length
     document.getElementById('stat-maps').textContent = status.maps.length
 
     if (status.currentMap) {
-      const cleanName = status.currentMap.Name.replace(/\$[0-9a-fA-F]{1,3}/g, '') // Strip color codes roughly
+      const cleanName = this.stripManiaPlanetFormatting(status.currentMap.Name)
       document.getElementById('stat-current').textContent = cleanName
       document.getElementById('stat-current').title = cleanName
     }
@@ -177,13 +208,17 @@ const app = {
 
     players.forEach(p => {
       const isNew = !this.state.lastPlayers.includes(p.Login) && this.state.lastPlayers.length > 0
+      
+      // Get clean nickname, fallback to login if not available
+      const cleanNickName = this.stripManiaPlanetFormatting(p.NickName) || p.Login
 
       const div = document.createElement('div')
       div.className = 'list-item'
 
       div.innerHTML = `
                 <div class="item-info">
-                    <span class="player-login">${p.Login}</span>
+                    <span class="player-login">${this.escapeHtml(cleanNickName)}</span>
+                    <span class="player-login-name">(${this.escapeHtml(p.Login)})</span>
                     ${isNew ? '<span class="badge new">NEW</span>' : ''}
                 </div>
                 <div class="actions">
@@ -421,10 +456,16 @@ const app = {
       const position = index + 1
       const posClass = position <= 3 ? 'top3' : ''
       const time = this.formatTime(player.BestTime)
+      
+      // Get clean nickname, fallback to login if not available
+      const cleanNickName = this.stripManiaPlanetFormatting(player.NickName) || player.Login
 
       div.innerHTML = `
         <div class="ranking-position ${posClass}">#${position}</div>
-        <div class="ranking-player">${player.Login}</div>
+        <div class="ranking-player">
+          ${this.escapeHtml(cleanNickName)}
+          <span class="player-login-name">(${this.escapeHtml(player.Login)})</span>
+        </div>
         <div class="ranking-time">${time}</div>
       `
       list.appendChild(div)
