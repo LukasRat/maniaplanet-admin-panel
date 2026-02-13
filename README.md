@@ -49,21 +49,12 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
    const RPC_LOGIN = 'SuperAdmin';
    ```
    
-   **Maps Directory (IMPORTANT for map uploads!):**
+   **Maps Directory (Optional - for local cache):**
    ```javascript
-   const MAPS_DIR = '/path/to/your/ManiaPlanetServer/UserData/Maps'
+   const MAPS_DIR = process.env.MANIAPLANET_MAPS_DIR || path.join(__dirname, 'UserData', 'Maps')
    ```
    
-   The `MAPS_DIR` **must** point to your actual ManiaPlanet server's UserData/Maps directory. Examples:
-   - Linux: `/home/user/maniaplanetserver/UserData/Maps`
-   - Windows: `C:\\ManiaPlanetServer\\UserData\\Maps`
-   - Docker: `/server/UserData/Maps`
-   
-   Alternatively, set the `MANIAPLANET_MAPS_DIR` environment variable:
-   ```bash
-   export MANIAPLANET_MAPS_DIR="/path/to/ManiaPlanetServer/UserData/Maps"
-   npm start
-   ```
+   The `MAPS_DIR` is used as a local cache for uploaded maps. Maps are automatically uploaded to the Maniaplanet server via the WriteFile RPC method, so you don't need to configure this unless you want to change the local storage location.
 
 4. Start the panel:
    ```bash
@@ -148,26 +139,28 @@ The admin panel includes a server restart feature that uses the `restart.sh` scr
 
 If map uploads fail or show "0 maps uploaded":
 
-1. **Check MAPS_DIR configuration**:
-   - The `MAPS_DIR` in `server.js` must point to your actual ManiaPlanet server's `UserData/Maps` directory
-   - The path must be absolute, not relative
-   - The admin panel process must have write permissions to this directory
+1. **Check RPC connection**:
+   - Ensure the ManiaPlanet server is running with XML-RPC enabled
+   - Verify `RPC_HOST` and `RPC_PORT` are correct in `server.js`
+   - Check that you've logged in with the correct SuperAdmin password
 
-2. **Verify the path exists**:
-   ```bash
-   ls -la /path/to/your/ManiaPlanetServer/UserData/Maps
-   ```
+2. **Check error messages**:
+   - Open browser console (F12) to see detailed error messages
+   - Check server console for RPC error details
+   - Common errors:
+     - "Map unknown" - Usually means WriteFile failed (check RPC connection)
+     - "Authentication failed" - Wrong password or RPC not enabled
+     - "Connection refused" - Server not running or wrong port
 
-3. **Check permissions**:
-   ```bash
-   # The user running the admin panel needs write access
-   chmod 755 /path/to/your/ManiaPlanetServer/UserData/Maps
-   ```
+3. **Verify map files**:
+   - Files must have `.gbx` or `.Map.Gbx` extension (case-insensitive)
+   - File size must be under 10MB (configurable in server.js)
+   - Filenames should not contain path traversal attempts (`..`)
 
-4. **Common mistakes**:
-   - ❌ Using a relative path like `./maps_storage`
-   - ❌ Using a local directory instead of the server's Maps directory
-   - ✅ Using the full path to your ManiaPlanet server's UserData/Maps directory
+**How it works:**
+- Maps are uploaded via the `WriteFile` RPC method directly to the server
+- No filesystem access to the server is required
+- Maps are also stored locally in `UserData/Maps` as a cache
 
 ### Error: Cannot find module 'express'
 

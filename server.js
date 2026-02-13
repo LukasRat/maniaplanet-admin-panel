@@ -265,10 +265,17 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
         const tempPath = file.path
         const finalPath = path.join(MAPS_DIR, validatedName)
 
-        // Move file to final location with original filename
+        // Move file to final location with original filename (keep local copy)
         fs.renameSync(tempPath, finalPath)
 
-        // Small pause to let Maniaplanet process
+        // Read the map file content
+        const mapContent = fs.readFileSync(finalPath)
+
+        // Upload the map file to the Maniaplanet server using WriteFile RPC
+        // This transfers the file to the server's UserData/Maps directory
+        await rpcCall('WriteFile', [validatedName, mapContent])
+
+        // Small pause to let Maniaplanet process the file
         await new Promise(r => setTimeout(r, 300))
 
         // Register map with Maniaplanet server using original filename
