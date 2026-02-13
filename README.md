@@ -2,7 +2,7 @@
 
 A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers (Stadium).
 
-![Dashboard](public/screenshot.png)
+![Dashboard](https://github.com/user-attachments/assets/44459f92-0f7d-4a98-ad39-57e93b9a0598)
 
 ## Features
 
@@ -11,8 +11,89 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 - 🏎️ **Map Management:** Drag-and-drop map uploads, pool shuffling, and removal.
 - 👥 **Player Controls:** Kick, Ban, Mute, or Spectate players directly from the UI.
 - 🕒 **Live Rankings:** Real-time session rankings with accurate best times.
-- 💬 **Integrated Chat:** Full server chat integration with support for ManiaPlanet color codes.
-- 🔄 **Server Restart:** Restart the game server via configurable restart.sh script.
+- 💬 **Integrated Chat:** Full server chat integration with ManiaPlanet formatting support.
+- 🎨 **Clean Display:** Automatically strips ManiaPlanet color codes from names for clean, readable text.
+- 🔄 **Server Controls:** Restart server, restart map, skip map, and shuffle map pool.
+- ⚡ **Expansion Support:** Dedicated restart functionality for ManiaPlanet expansion/controller.
+
+## UI Overview
+
+The admin panel features a modern, intuitive interface with multiple sections:
+
+### 🎯 Dashboard
+Real-time overview showing:
+- **Players Online** - Current player count
+- **Maps in Pool** - Total maps available
+- **Current Map** - Active map being played
+
+![Dashboard](https://github.com/user-attachments/assets/44459f92-0f7d-4a98-ad39-57e93b9a0598)
+
+### 🎮 Server Management
+Complete server control including:
+- **Skip Map** - Move to the next map in rotation
+- **Restart Map** - Restart the current map
+- **Shuffle Maps** - Randomize the map pool order
+- **Restart Server** - Full server restart (requires configuration)
+- **Restart Expansion** - Restart the ManiaPlanet expansion/controller
+
+Server information display:
+- Server name (with clean formatting)
+- Version information
+- Maximum players and spectators
+
+### 👥 Player Management
+Full player control capabilities:
+- **Kick** - Remove player from server
+- **Ban** - Permanently ban a player
+- **Spectate** - Force player to spectator mode
+- View player nicknames with clean formatting (color codes automatically stripped)
+
+### 🗺️ Map Pool Management
+Advanced map management features:
+- View all maps in the current pool
+- **Queue Maps** - Set next map to play
+- **Remove Maps** - Delete maps from rotation
+- See which map is currently active
+- Identify maps not in pool vs. maps only in pool
+
+### 🏆 Live Rankings
+Real-time leaderboard showing:
+- Player positions (top 3 highlighted)
+- Best lap times
+- Player names with clean formatting
+
+### 💬 Server Chat
+Integrated chat system:
+- View all server messages
+- Send server-wide messages
+- Automatic ManiaPlanet formatting code handling
+
+### ☁️ Map Upload
+Drag-and-drop map upload:
+- Multi-file upload support
+- Automatic `.gbx` file detection
+- Direct integration with map pool
+- Upload status feedback
+
+## 🎨 ManiaPlanet Color Code Support
+
+**NEW FEATURE:** The admin panel automatically strips ManiaPlanet formatting codes from all displayed text, ensuring clean and readable names throughout the interface.
+
+ManiaPlanet uses special formatting codes like:
+- `$F00` - Color codes (hex colors)
+- `$o` - Bold text
+- `$i` - Italic text
+- `$w` - Wide text
+- `$n` - Narrow text
+- And many more...
+
+The panel intelligently removes these codes from:
+- ✅ Server names
+- ✅ Player nicknames
+- ✅ Map names
+- ✅ Chat messages
+
+This ensures a clean, professional appearance while maintaining full compatibility with ManiaPlanet's formatting system.
 
 ## Tech Stack
 
@@ -151,6 +232,38 @@ The admin panel includes a server restart feature that uses the `restart.sh` scr
 
 **Note:** The admin panel (Node.js) runs separately from your ManiaPlanet game server. This script restarts the **game server**, not the admin panel.
 
+### Configuring Expansion Restart (Optional)
+
+If you use a ManiaPlanet expansion or controller (separate process that manages your server), you can configure the expansion restart feature:
+
+1. **Edit the restart_expansion.sh file:**
+   ```bash
+   nano restart_expansion.sh
+   ```
+
+2. **Configure the expansion directory path:**
+   ```bash
+   EXPANSION_DIR="/home/user/Desktop/expansion"
+   ```
+   Update this to point to your actual expansion installation directory.
+
+3. **Make the script executable:**
+   ```bash
+   chmod +x restart_expansion.sh
+   ```
+
+4. **Test the script:**
+   ```bash
+   ./restart_expansion.sh
+   ```
+
+The script will:
+- Stop the expansion using `./run --stop`
+- Wait 10 seconds
+- Start the expansion using `./run --start`
+
+**Note:** This feature is optional and only needed if you run a ManiaPlanet expansion/controller alongside your game server.
+
 ## Troubleshooting
 
 ### Map Upload Not Working
@@ -220,6 +333,29 @@ This happens because `node_modules/` is not included in the repository (it's in 
 
 - **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on port 5000
 - **Port 3100 already in use:** Change `HTTP_PORT` in `server.js` or stop the process using port 3100
+
+## 📸 Features Showcase
+
+### Modern Dark Theme
+The admin panel features a sleek, modern dark theme with glassmorphism effects and neon accents, providing a professional and easy-to-use interface.
+
+### Real-Time Updates
+All data refreshes automatically every 5 seconds, ensuring you always have the latest information about your server without manual refreshing.
+
+### Comprehensive Control
+Every aspect of your ManiaPlanet server can be controlled from a single, unified interface:
+- 🎮 Server management
+- 👥 Player administration  
+- 🗺️ Map pool control
+- 💬 Chat interaction
+- 📊 Live statistics
+- 🏆 Rankings tracking
+
+### Smart Formatting
+Automatically handles ManiaPlanet's complex formatting codes, displaying clean, readable text throughout the interface while preserving full compatibility.
+
+### Drag & Drop Upload
+Intuitive drag-and-drop interface for map uploads makes adding new content effortless. Simply drag `.gbx` files onto the upload zone or browse to select them.
 
 ## License
 
