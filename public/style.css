@@ -606,7 +606,7 @@ input:focus {
     width: 100%;
     font-size: 0.95rem;
     margin-bottom: 10px;
-    padding: 0 15px;
+    padding: 0 85px 0 15px; /* Add right padding to prevent overlap with logout */
     justify-content: space-between;
   }
 
@@ -619,7 +619,7 @@ input:focus {
     overflow-y: hidden;
     padding: 0 15px 8px 15px;
     -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
+    scroll-snap-type: x mandatory; /* Changed to mandatory for better snapping */
     /* Hide scrollbar but keep functionality */
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -631,14 +631,14 @@ input:focus {
     display: none;
   }
 
-  /* Scroll indicator shadows */
+  /* Scroll indicator shadows - reduced width for better readability */
   .nav-links::before,
   .nav-links::after {
     content: '';
     position: absolute;
     top: 0;
     bottom: 8px;
-    width: 20px;
+    width: 12px; /* Reduced from 20px for better text visibility */
     pointer-events: none;
     z-index: 1;
   }
