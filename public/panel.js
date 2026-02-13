@@ -155,8 +155,11 @@ const app = {
 
   /**
    * Strips ManiaPlanet formatting codes from text
-   * Removes color codes ($xxx where x is hex, supports 1-3 digits) and
-   * special formatting codes ($w for wide, $n for narrow, etc.)
+   * Removes color codes and special formatting codes:
+   * - Color codes: $F, $F00, $FFF (hex digits, 1-3 length)
+   * - Formatting codes: $w (wide), $n (narrow), $o (bold), $i (italic), 
+   *   $t (uppercase), $s (shadow), $g (default), $z (reset), 
+   *   $< (smaller), $> (larger)
    * @param {string} text - The text to strip codes from
    * @returns {string} The cleaned text without formatting codes
    */
