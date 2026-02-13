@@ -167,6 +167,21 @@ This ensures a clean, professional appearance while maintaining full compatibili
 
 The admin panel can be run as a background daemon that starts automatically on system boot and doesn't depend on a user shell. Choose one of the following methods based on your setup:
 
+### 🚀 Quick Start Guide
+
+**Choose your deployment method:**
+
+| Your Situation | Recommended Method | Quick Start Command |
+|----------------|-------------------|---------------------|
+| Linux production server | systemd | `./install-systemd.sh` |
+| Development/testing | PM2 | `pm2 start ecosystem.config.js` |
+| Container environment | Docker | `docker-compose up -d` |
+| Quick test | nohup | `nohup npm start &` |
+
+**Need help choosing?** See the [comparison table](#choosing-the-right-method) below.
+
+**Testing your setup?** See [DAEMON-TESTING.md](DAEMON-TESTING.md) for comprehensive testing guide.
+
 ### Method 1: systemd Service (Recommended for Linux)
 
 systemd is the standard init system for most modern Linux distributions. This method ensures the admin panel starts automatically on boot and restarts on failure.
@@ -367,6 +382,20 @@ kill <PID>
 | PM2 | Node.js apps | ✅ | ✅ | ✅ (built-in) | ✅ Yes |
 | Docker | Containerized environments | ✅ | ✅ | ✅ (docker logs) | ✅ Yes |
 | nohup | Quick testing | ❌ | ❌ | ⚠️ Manual | ✅ Yes |
+
+### Testing Your Daemon Setup
+
+After setting up the daemon, verify it's working correctly using the comprehensive testing guide:
+
+📋 **[View DAEMON-TESTING.md](DAEMON-TESTING.md)** - Complete testing procedures for all deployment methods
+
+The testing guide includes:
+- Health check verification
+- Auto-restart testing
+- Boot persistence verification
+- Troubleshooting common issues
+- Performance monitoring
+- Security verification
 
 ### Configuring Server Restart (Required for Restart Button)
 
