@@ -153,7 +153,7 @@ const app = {
 
   // --- Renderers ---
 
-  stripManiaplanetColors(text) {
+  stripManiaPlanetColors(text) {
     if (!text) return ''
     // Strip ManiaPlanet color codes ($xxx where x is hex) and formatting codes ($w, $n, etc.)
     return text.replace(/\$[0-9a-fA-F]{1,3}/g, '').replace(/\$[wnoitsgz<>]/g, '')
@@ -164,7 +164,7 @@ const app = {
     document.getElementById('stat-maps').textContent = status.maps.length
 
     if (status.currentMap) {
-      const cleanName = this.stripManiaplanetColors(status.currentMap.Name)
+      const cleanName = this.stripManiaPlanetColors(status.currentMap.Name)
       document.getElementById('stat-current').textContent = cleanName
       document.getElementById('stat-current').title = cleanName
     }
@@ -185,7 +185,7 @@ const app = {
       const isNew = !this.state.lastPlayers.includes(p.Login) && this.state.lastPlayers.length > 0
       
       // Get clean nickname, fallback to login if not available
-      const cleanNickName = this.stripManiaplanetColors(p.NickName) || p.Login
+      const cleanNickName = this.stripManiaPlanetColors(p.NickName) || p.Login
 
       const div = document.createElement('div')
       div.className = 'list-item'
@@ -433,7 +433,7 @@ const app = {
       const time = this.formatTime(player.BestTime)
       
       // Get clean nickname, fallback to login if not available
-      const cleanNickName = this.stripManiaplanetColors(player.NickName) || player.Login
+      const cleanNickName = this.stripManiaPlanetColors(player.NickName) || player.Login
 
       div.innerHTML = `
         <div class="ranking-position ${posClass}">#${position}</div>
