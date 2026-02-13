@@ -155,6 +155,11 @@ async function ensureMapInPool(file) {
   if (!exists) await rpcCall('AddMap', [file])
 }
 
+/**
+ * Maps ManiaPlanet game mode numeric IDs to human-readable names
+ * @param {number} gameModeNumber - The numeric game mode ID from GetGameMode RPC call
+ * @returns {string} Human-readable game mode name
+ */
 function getGameModeName(gameModeNumber) {
   const gameModeNames = {
     0: 'Script',
@@ -703,7 +708,7 @@ app.get('/api/game/mode', async (_, res) => {
     ])
     
     res.json({
-      gameMode: gameMode,
+      gameMode,
       gameModeName: gameMode !== null ? getGameModeName(gameMode) : 'Unknown',
       modeScriptInfo: modeScriptInfo || {}
     })

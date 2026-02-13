@@ -528,8 +528,8 @@ const app = {
   },
 
   renderVoteStatus(voteStatus) {
-    // Display vote settings if callVoteRatio is a number (including -1 for disabled, and values > 1.0)
-    if (voteStatus?.callVoteRatio !== undefined && voteStatus?.callVoteRatio !== null) {
+    // Display vote settings if callVoteRatio is a number
+    if (typeof voteStatus?.callVoteRatio === 'number') {
       const voteCard = document.getElementById('vote-settings-card')
       if (voteCard) {
         voteCard.style.display = 'block'
