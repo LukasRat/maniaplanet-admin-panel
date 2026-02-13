@@ -89,6 +89,9 @@ const app = {
     document.querySelectorAll('.section').forEach(el => el.classList.remove('active'))
     document.getElementById('tab-dashboard').classList.add('active')
 
+    // Update connection status
+    this.updateConnectionStatus(false)
+
     this.showToast('Logged out successfully', 'success')
   },
 
@@ -218,6 +221,13 @@ const app = {
       const cleanName = this.stripManiaPlanetFormatting(status.currentMap.Name)
       document.getElementById('stat-current').textContent = cleanName
       document.getElementById('stat-current').title = cleanName
+    }
+  },
+
+  updateBanCount(count) {
+    const bansStat = document.getElementById('stat-bans')
+    if (bansStat) {
+      bansStat.textContent = count
     }
   },
 
@@ -643,6 +653,9 @@ const app = {
     if (!list) return
     
     list.innerHTML = ''
+
+    // Update ban count in dashboard
+    this.updateBanCount(bans ? bans.length : 0)
 
     if (!bans || bans.length === 0) {
       list.innerHTML = '<div style="padding: 20px; color: var(--text-muted); text-align: center;">No banned players</div>'
