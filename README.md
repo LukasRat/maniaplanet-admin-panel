@@ -422,7 +422,11 @@ The admin panel exposes several REST API endpoints for integration and automatio
 ### Game Information
 - `GET /api/game/rankings` - Get current rankings/leaderboard
 - `GET /api/game/status` - Get game status
-- `GET /api/game/mode` - Get current game mode and mode script information
+- `GET /api/game/mode` - Get current game mode information
+  - Returns: `{ gameMode: number, gameModeName: string, modeScriptInfo: object }`
+  - gameMode: Numeric mode ID (0=Script, 1=Rounds, 2=TimeAttack, 3=Team, 4=Laps, 5=Cup, 6=Stunts)
+  - gameModeName: Human-readable mode name
+  - modeScriptInfo: Mode script metadata (name, version, settings)
 
 ### Player Management
 - `GET /api/players/detailed` - Get detailed player information

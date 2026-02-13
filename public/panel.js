@@ -528,17 +528,22 @@ const app = {
   },
 
   renderVoteStatus(voteStatus) {
-    if (voteStatus?.callVoteRatio >= 0) {
+    // Display vote settings if callVoteRatio is a number (including -1 for disabled, and values > 1.0)
+    if (voteStatus?.callVoteRatio !== undefined && voteStatus?.callVoteRatio !== null) {
       const voteCard = document.getElementById('vote-settings-card')
       if (voteCard) {
         voteCard.style.display = 'block'
         
-        // Display call vote ratio as percentage
-        const ratio = (voteStatus.callVoteRatio * 100).toFixed(0)
-        document.getElementById('vote-ratio').textContent = `${ratio}%`
+        // Display call vote ratio as percentage, handle -1 (disabled) specially
+        if (voteStatus.callVoteRatio === -1) {
+          document.getElementById('vote-ratio').textContent = 'N/A'
+        } else {
+          const ratio = (voteStatus.callVoteRatio * 100).toFixed(0)
+          document.getElementById('vote-ratio').textContent = `${ratio}%`
+        }
         
-        // Determine if voting is enabled (ratio > 0 means votes can happen)
-        const voteEnabled = voteStatus.callVoteRatio > 0 && voteStatus.callVoteRatio <= 1
+        // Voting is disabled if ratio is -1
+        const voteEnabled = voteStatus.callVoteRatio !== -1
         document.getElementById('vote-status').textContent = voteEnabled ? 'Enabled' : 'Disabled'
         document.getElementById('vote-status').style.color = voteEnabled ? 'var(--success)' : 'var(--text-muted)'
       }

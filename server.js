@@ -553,10 +553,7 @@ app.get('/api/players/detailed', async (_, res) => {
       players.map(async (p) => {
         try {
           const info = await rpcCall('GetDetailedPlayerInfo', [p.Login])
-          return { 
-            ...p, 
-            ...info
-          }
+          return { ...p, ...info }
         } catch {
           return p
         }
@@ -706,7 +703,8 @@ app.get('/api/game/mode', async (_, res) => {
     ])
     
     res.json({
-      gameMode: gameMode || 0,
+      gameMode: gameMode,
+      gameModeName: gameMode !== null ? getGameModeName(gameMode) : 'Unknown',
       modeScriptInfo: modeScriptInfo || {}
     })
   } catch (err) {
@@ -734,6 +732,12 @@ app.get('/api/network/stats', async (_, res) => {
 app.get('/api/votes/status', async (_, res) => {
   try {
     const callVoteRatio = await rpcCall('GetCallVoteRatio').catch(() => null)
+    
+    // Return empty object if vote ratio unavailable for consistency
+    if (callVoteRatio === null) {
+      return res.json({})
+    }
+    
     res.json({
       callVoteRatio: callVoteRatio
     })
