@@ -108,6 +108,10 @@
             <h3>Banned Players</h3>
             <div id="stat-bans" class="stat-value">0</div>
           </div>
+          <div class="stat-card">
+            <h3>Game Mode</h3>
+            <div id="stat-gamemode" class="stat-value">-</div>
+          </div>
         </div>
       </section>
 
@@ -170,6 +174,29 @@
             <div class="info-item">
               <span class="info-label">Max Spectators</span>
               <span id="server-max-spectators" class="info-value">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network Statistics Card -->
+        <div class="card" id="network-stats-card" style="display: none;">
+          <h3>Network Statistics</h3>
+          <div class="server-info-grid">
+            <div class="info-item">
+              <span class="info-label">Uptime</span>
+              <span id="server-uptime" class="info-value">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Received (KB/s)</span>
+              <span id="network-recv-rate" class="info-value">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Sent (KB/s)</span>
+              <span id="network-send-rate" class="info-value">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Total Connections</span>
+              <span id="network-total-conn" class="info-value">-</span>
             </div>
           </div>
         </div>

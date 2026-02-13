@@ -205,13 +205,32 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/status', async (_, res) => {
   try {
-    const [players, maps, currentMap] = await Promise.all([
+    const [players, maps, currentMap, banList, gameMode] = await Promise.all([
       rpcCall('GetPlayerList', [100, 0]),
       rpcCall('GetChallengeList', [1000, 0]),
-      rpcCall('GetCurrentChallengeInfo')
+      rpcCall('GetCurrentChallengeInfo'),
+      rpcCall('GetBanList', [1000, 0]).catch(() => []),
+      rpcCall('GetGameMode').catch(() => null)
     ])
 
-    res.json({ players, maps, currentMap })
+    // Map game mode numbers to names
+    const gameModeNames = {
+      0: 'Script',
+      1: 'Rounds',
+      2: 'TimeAttack',
+      3: 'Team',
+      4: 'Laps',
+      5: 'Cup',
+      6: 'Stunts'
+    }
+
+    res.json({ 
+      players, 
+      maps, 
+      currentMap, 
+      banCount: banList.length,
+      gameMode: gameMode !== null ? gameModeNames[gameMode] || `Mode ${gameMode}` : 'Unknown'
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -312,12 +331,13 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
 
 app.get('/api/server/info', async (_, res) => {
   try {
-    const [version, status, serverName, maxPlayers, maxSpectators] = await Promise.all([
+    const [version, status, serverName, maxPlayers, maxSpectators, networkStats] = await Promise.all([
       rpcCall('GetVersion'),
       rpcCall('GetStatus'),
       rpcCall('GetServerName'),
       rpcCall('GetMaxPlayers'),
-      rpcCall('GetMaxSpectators')
+      rpcCall('GetMaxSpectators'),
+      rpcCall('GetNetworkStats').catch(() => null)
     ])
 
     res.json({
@@ -325,7 +345,8 @@ app.get('/api/server/info', async (_, res) => {
       status,
       serverName,
       maxPlayers: maxPlayers.CurrentValue,
-      maxSpectators: maxSpectators.CurrentValue
+      maxSpectators: maxSpectators.CurrentValue,
+      networkStats: networkStats || {}
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -530,7 +551,12 @@ app.get('/api/players/detailed', async (_, res) => {
       players.map(async (p) => {
         try {
           const info = await rpcCall('GetDetailedPlayerInfo', [p.Login])
-          return { ...p, ...info }
+          // Include latency/ping information if available
+          return { 
+            ...p, 
+            ...info,
+            Ping: info.LadderStats?.LastMatchScore || 0
+          }
         } catch {
           return p
         }
@@ -663,6 +689,53 @@ app.get('/api/chat/lines', async (_, res) => {
   try {
     const chatLines = await rpcCall('GetChatLines')
     res.json(chatLines)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/* =========================
+   GAME MODE & MODE SCRIPT INFO
+========================= */
+
+app.get('/api/game/mode', async (_, res) => {
+  try {
+    const [gameMode, modeScriptInfo] = await Promise.all([
+      rpcCall('GetGameMode').catch(() => null),
+      rpcCall('GetModeScriptInfo').catch(() => null)
+    ])
+    
+    res.json({
+      gameMode: gameMode || 0,
+      modeScriptInfo: modeScriptInfo || {}
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/* =========================
+   NETWORK STATISTICS
+========================= */
+
+app.get('/api/network/stats', async (_, res) => {
+  try {
+    const networkStats = await rpcCall('GetNetworkStats').catch(() => null)
+    res.json(networkStats || {})
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/* =========================
+   MAP INFORMATION
+========================= */
+
+app.get('/api/maps/info/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params
+    const mapInfo = await rpcCall('GetMapInfo', [filename])
+    res.json(mapInfo)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

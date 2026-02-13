@@ -222,6 +222,16 @@ const app = {
       document.getElementById('stat-current').textContent = cleanName
       document.getElementById('stat-current').title = cleanName
     }
+    
+    // Update ban count
+    if (status.banCount !== undefined) {
+      document.getElementById('stat-bans').textContent = status.banCount
+    }
+    
+    // Update game mode
+    if (status.gameMode) {
+      document.getElementById('stat-gamemode').textContent = status.gameMode
+    }
   },
 
   updateBanCount(count) {
@@ -486,6 +496,27 @@ const app = {
     document.getElementById('server-version').textContent = info.version?.Version || '-'
     document.getElementById('server-max-players').textContent = info.maxPlayers || '-'
     document.getElementById('server-max-spectators').textContent = info.maxSpectators || '-'
+    
+    // Display network statistics if available
+    if (info.networkStats && Object.keys(info.networkStats).length > 0) {
+      const networkCard = document.getElementById('network-stats-card')
+      networkCard.style.display = 'block'
+      
+      // Uptime in hours
+      const uptime = info.networkStats.Uptime || 0
+      const uptimeHours = Math.floor(uptime / 3600000) // Convert ms to hours
+      const uptimeMins = Math.floor((uptime % 3600000) / 60000)
+      document.getElementById('server-uptime').textContent = `${uptimeHours}h ${uptimeMins}m`
+      
+      // Network rates (convert from bytes to KB/s)
+      const recvRate = (info.networkStats.RecvNetRate || 0) / 1024
+      const sendRate = (info.networkStats.SendNetRate || 0) / 1024
+      document.getElementById('network-recv-rate').textContent = recvRate.toFixed(2)
+      document.getElementById('network-send-rate').textContent = sendRate.toFixed(2)
+      
+      // Total connections
+      document.getElementById('network-total-conn').textContent = info.networkStats.TotalReceivingSize || '-'
+    }
   },
 
   renderRankings(rankings) {
