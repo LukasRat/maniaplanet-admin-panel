@@ -434,7 +434,8 @@ const app = {
   // --- Renderers for New Features ---
 
   renderServerInfo(info) {
-    document.getElementById('server-name').textContent = info.serverName || '-'
+    const cleanServerName = this.stripManiaPlanetFormatting(info.serverName) || '-'
+    document.getElementById('server-name').textContent = cleanServerName
     document.getElementById('server-version').textContent = info.version?.Version || '-'
     document.getElementById('server-max-players').textContent = info.maxPlayers || '-'
     document.getElementById('server-max-spectators').textContent = info.maxSpectators || '-'
