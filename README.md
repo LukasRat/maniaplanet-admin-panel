@@ -7,7 +7,7 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 ## Features
 
 - 🌑 **Modern UI:** Dark theme with glassmorphism and neon accents.
-- 📊 **Real-time Dashboard:** Live overview of server status, map info, players, and banned players count.
+- 📊 **Real-time Dashboard:** Live overview of server status, map info, players, banned players count, and game mode.
 - 🏎️ **Map Management:** Drag-and-drop map uploads, pool shuffling, and removal with search/filter.
 - 👥 **Player Controls:** Kick, Ban, Mute, or Spectate players directly from the UI with search/filter.
 - 🚫 **Ban Management:** View all banned players, unban individuals, or clear all bans at once.
@@ -21,6 +21,9 @@ A sleek, modern, and powerful web-based admin panel for ManiaPlanet game servers
 - 📡 **Connection Status:** Live indicator showing server connection state.
 - ⌨️ **Keyboard Shortcuts:** Quick actions with keyboard shortcuts (Ctrl+R to refresh, Ctrl+/ to search).
 - ✨ **Better UX:** Custom confirmation dialogs instead of browser alerts.
+- 🎮 **Game Mode Display:** Shows current game mode (Rounds, TimeAttack, Team, Laps, etc.) on dashboard.
+- 📈 **Network Statistics:** Real-time server performance monitoring with uptime and bandwidth stats.
+- 🗳️ **Vote System Info:** Display vote ratio settings and vote system status.
 
 ## UI Overview
 
@@ -32,6 +35,7 @@ Real-time overview showing:
 - **Maps in Pool** - Total maps available
 - **Current Map** - Active map being played
 - **Banned Players** - Number of players currently banned
+- **Game Mode** - Current game mode (Rounds, TimeAttack, Team, Laps, Cup, Stunts)
 
 ![Dashboard][dashboard-screenshot]
 
@@ -47,6 +51,16 @@ Server information display:
 - Server name (with clean formatting)
 - Version information
 - Maximum players and spectators
+
+**Network Statistics:**
+- Server uptime (hours and minutes)
+- Network receive rate (KB/s)
+- Network send rate (KB/s)
+- Total connections
+
+**NEW: Vote System Information**
+- Call vote ratio (percentage required for votes to pass)
+- Vote system status (enabled/disabled)
 
 **NEW: Server Settings Editor**
 - Edit server name without restarting
@@ -390,6 +404,58 @@ Automatically handles ManiaPlanet's complex formatting codes, displaying clean, 
 
 ### Drag & Drop Upload
 Intuitive drag-and-drop interface for map uploads makes adding new content effortless. Simply drag `.gbx` files onto the upload zone or browse to select them.
+
+## 📚 API Documentation
+
+The admin panel exposes several REST API endpoints for integration and automation:
+
+### Server Management
+- `POST /api/login` - Authenticate with server password
+- `GET /api/status` - Get server status including players, maps, current map, ban count, and game mode
+- `GET /api/server/info` - Get detailed server information including network statistics
+- `POST /api/server/settings` - Update server settings (name, max players, max spectators, password)
+- `POST /api/server/skip-map` - Skip to next map
+- `POST /api/server/restart-map` - Restart current map
+- `POST /api/server/restart` - Restart game server (requires restart.sh configuration)
+- `POST /api/server/restart-expansion` - Restart expansion/controller
+
+### Game Information
+- `GET /api/game/rankings` - Get current rankings/leaderboard
+- `GET /api/game/status` - Get game status
+- `GET /api/game/mode` - Get current game mode and mode script information
+
+### Player Management
+- `GET /api/players/detailed` - Get detailed player information
+- `POST /api/players/kick` - Kick a player (requires login)
+- `POST /api/players/ban` - Ban a player (requires login)
+- `POST /api/players/spectate` - Force player to spectator (requires login)
+
+### Map Management
+- `GET /api/maps/files` - List all map files
+- `GET /api/maps/info/:filename` - Get detailed map information
+- `POST /api/maps/upload` - Upload new maps
+- `POST /api/maps/next` - Set next map to play (requires file)
+- `POST /api/maps/remove` - Remove map from pool (requires file)
+- `POST /api/maps/shuffle` - Shuffle map pool order
+- `POST /api/maps/insert` - Insert map at specific position
+
+### Ban Management
+- `GET /api/bans/list` - Get list of banned players
+- `POST /api/bans/unban` - Unban a player (requires login)
+- `POST /api/bans/clear` - Clear all bans
+
+### Chat & Communication
+- `GET /api/chat/lines` - Get recent chat messages
+- `POST /api/chat/send` - Send server message (requires message)
+- `POST /api/chat/private` - Send private message to player (requires login, message)
+
+### Network & Performance
+- `GET /api/network/stats` - Get network statistics (uptime, bandwidth)
+
+### Vote System
+- `GET /api/votes/status` - Get vote system status and call vote ratio
+
+All endpoints return JSON responses. POST endpoints require `Content-Type: application/json` header.
 
 ## License
 

@@ -97,13 +97,14 @@ const app = {
 
   async refresh() {
     try {
-      const [statusRes, filesRes, serverInfoRes, rankingsRes, chatRes, bansRes] = await Promise.all([
+      const [statusRes, filesRes, serverInfoRes, rankingsRes, chatRes, bansRes, voteStatusRes] = await Promise.all([
         fetch(`${API}/status`),
         fetch(`${API}/maps/files`),
         fetch(`${API}/server/info`).catch(() => null),
         fetch(`${API}/game/rankings`).catch(() => null),
         fetch(`${API}/chat/lines`).catch(() => null),
-        fetch(`${API}/bans/list`).catch(() => null)
+        fetch(`${API}/bans/list`).catch(() => null),
+        fetch(`${API}/votes/status`).catch(() => null)
       ])
 
       const status = await statusRes.json()
@@ -141,6 +142,12 @@ const app = {
       if (bansRes && bansRes.ok) {
         const bans = await bansRes.json()
         this.renderBans(bans)
+      }
+
+      // Render vote status if available
+      if (voteStatusRes && voteStatusRes.ok) {
+        const voteStatus = await voteStatusRes.json()
+        this.renderVoteStatus(voteStatus)
       }
 
       // Update connection status
@@ -516,6 +523,24 @@ const app = {
       
       // Total connections
       document.getElementById('network-total-conn').textContent = info.networkStats.TotalReceivingSize || '-'
+    }
+  },
+
+  renderVoteStatus(voteStatus) {
+    if (voteStatus && voteStatus.callVoteRatio !== undefined && voteStatus.callVoteRatio !== -1) {
+      const voteCard = document.getElementById('vote-settings-card')
+      if (voteCard) {
+        voteCard.style.display = 'block'
+        
+        // Display call vote ratio as percentage
+        const ratio = (voteStatus.callVoteRatio * 100).toFixed(0)
+        document.getElementById('vote-ratio').textContent = `${ratio}%`
+        
+        // Determine if voting is enabled
+        const voteEnabled = voteStatus.callVoteRatio > 0 && voteStatus.callVoteRatio <= 1
+        document.getElementById('vote-status').textContent = voteEnabled ? 'Enabled' : 'Disabled'
+        document.getElementById('vote-status').style.color = voteEnabled ? 'var(--success)' : 'var(--text-muted)'
+      }
     }
   },
 

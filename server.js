@@ -728,6 +728,21 @@ app.get('/api/network/stats', async (_, res) => {
 })
 
 /* =========================
+   VOTE SYSTEM
+========================= */
+
+app.get('/api/votes/status', async (_, res) => {
+  try {
+    const callVoteRatio = await rpcCall('GetCallVoteRatio').catch(() => null)
+    res.json({
+      callVoteRatio: callVoteRatio || -1
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/* =========================
    MAP INFORMATION
 ========================= */
 
