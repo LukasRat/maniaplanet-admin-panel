@@ -166,9 +166,13 @@ const app = {
    */
   stripManiaPlanetFormatting(text) {
     if (!text) return ''
-    // Strip ManiaPlanet codes: color codes ($F, $F00, $FFF), formatting codes ($w, $n, etc.)
-    // and replace $$ (escape for literal $) with single $
-    return text.replace(/\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g, '').replace(/\$\$/g, '$')
+    // First replace $$ (escape for literal $) with a temporary placeholder
+    // Then strip ManiaPlanet codes: color codes ($F, $F00, $FFF) and formatting codes ($w, $n, etc.)
+    // Finally restore literal dollar signs
+    return text
+      .replace(/\$\$/g, '\x00')  // Temporarily replace $$ with null char
+      .replace(/\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g, '')  // Strip formatting codes
+      .replace(/\x00/g, '$')  // Restore literal $
   },
 
   renderDashboard(status) {
