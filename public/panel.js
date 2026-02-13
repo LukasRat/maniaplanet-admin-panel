@@ -1,5 +1,10 @@
 const API = `${window.location.origin}/api`  // Use current host instead of hardcoded localhost
 
+// ManiaPlanet formatting code patterns
+const MANIAPLANET_COLOR_PATTERN = /\$[0-9a-fA-F]{1,3}/g  // Color codes: $F, $F00, $FFF
+const MANIAPLANET_FORMAT_PATTERN = /\$[wnoitsgz<>]/g     // Format codes: $w, $n, $o, $i, $t, $s, $g, $z, $<, $>
+const MANIAPLANET_ESCAPE_PATTERN = /\$\$/g               // Escape sequence: $$
+
 // Application State & Logic
 const app = {
   state: {
@@ -167,11 +172,12 @@ const app = {
   stripManiaPlanetFormatting(text) {
     if (!text) return ''
     // First replace $$ (escape for literal $) with a temporary placeholder
-    // Then strip ManiaPlanet codes: color codes ($F, $F00, $FFF) and formatting codes ($w, $n, etc.)
+    // Then strip ManiaPlanet formatting codes
     // Finally restore literal dollar signs
+    const COMBINED_PATTERN = /\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g
     return text
-      .replace(/\$\$/g, '\x00')  // Temporarily replace $$ with null char
-      .replace(/\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g, '')  // Strip formatting codes
+      .replace(MANIAPLANET_ESCAPE_PATTERN, '\x00')  // Temporarily replace $$ with null char
+      .replace(COMBINED_PATTERN, '')  // Strip all formatting codes
       .replace(/\x00/g, '$')  // Restore literal $
   },
 
