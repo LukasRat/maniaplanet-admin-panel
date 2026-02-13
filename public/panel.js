@@ -177,13 +177,17 @@ const app = {
 
     players.forEach(p => {
       const isNew = !this.state.lastPlayers.includes(p.Login) && this.state.lastPlayers.length > 0
+      
+      // Strip ManiaPlanet color codes from nickname
+      const cleanNickName = p.NickName ? p.NickName.replace(/\$[0-9a-fA-F]{1,3}/g, '').replace(/\$[wnoitsgz<>]/g, '') : p.Login
 
       const div = document.createElement('div')
       div.className = 'list-item'
 
       div.innerHTML = `
                 <div class="item-info">
-                    <span class="player-login">${p.Login}</span>
+                    <span class="player-login">${this.escapeHtml(cleanNickName)}</span>
+                    <span style="color: var(--text-muted); font-size: 0.85em; margin-left: 8px;">(${this.escapeHtml(p.Login)})</span>
                     ${isNew ? '<span class="badge new">NEW</span>' : ''}
                 </div>
                 <div class="actions">
@@ -421,10 +425,16 @@ const app = {
       const position = index + 1
       const posClass = position <= 3 ? 'top3' : ''
       const time = this.formatTime(player.BestTime)
+      
+      // Strip ManiaPlanet color codes from nickname
+      const cleanNickName = player.NickName ? player.NickName.replace(/\$[0-9a-fA-F]{1,3}/g, '').replace(/\$[wnoitsgz<>]/g, '') : player.Login
 
       div.innerHTML = `
         <div class="ranking-position ${posClass}">#${position}</div>
-        <div class="ranking-player">${player.Login}</div>
+        <div class="ranking-player">
+          ${this.escapeHtml(cleanNickName)}
+          <span style="color: var(--text-muted); font-size: 0.85em; margin-left: 8px;">(${this.escapeHtml(player.Login)})</span>
+        </div>
         <div class="ranking-time">${time}</div>
       `
       list.appendChild(div)
