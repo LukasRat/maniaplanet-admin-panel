@@ -122,39 +122,27 @@ async function rpcCall(method, params = []) {
    HELPERS
 ========================= */
 
-function sanitizeFilename(filename) {
-  // First validate the extension on the original filename
+function validateFilename(filename) {
+  // Validate the extension
   if (!/\.(?:Map\.)?Gbx$/i.test(filename)) {
     throw new Error('Invalid map file extension. File must end with .gbx or .Map.Gbx')
   }
   
-  // Check for dangerous patterns before sanitization
-  if (filename.includes('..') || /^\.+$/.test(filename)) {
-    throw new Error('Invalid filename pattern')
+  // Use basename to strip any path components (security: prevent directory traversal)
+  const basename = path.basename(filename)
+  
+  // Check for dangerous patterns (path traversal attempts)
+  if (basename.includes('..') || basename !== filename) {
+    throw new Error('Invalid filename: path traversal detected')
   }
   
-  // Remove any path separators and parent directory references
-  // Only allow alphanumeric, single dots, hyphens, and underscores
-  // Replace spaces with underscores for better compatibility
-  let sanitized = path.basename(filename).replace(/\s+/g, '_')
-  sanitized = sanitized.replace(/[^a-zA-Z0-9.\-_]/g, '')
-  
-  // Ensure we have a valid filename after sanitization
-  if (!sanitized) {
-    throw new Error('Filename became empty after sanitization')
+  // Ensure filename is not empty or just dots
+  if (!basename || /^\.+$/.test(basename)) {
+    throw new Error('Invalid filename')
   }
   
-  // Check for dangerous patterns after sanitization
-  if (sanitized.includes('..') || /^\.+$/.test(sanitized)) {
-    throw new Error('Invalid filename pattern after sanitization')
-  }
-  
-  // Ensure the sanitized filename still has a valid extension
-  if (!/\.(?:Map\.)?Gbx$/i.test(sanitized)) {
-    throw new Error('Filename became invalid after sanitization')
-  }
-  
-  return sanitized
+  // Return the original filename (Maniaplanet needs exact filename)
+  return basename
 }
 
 async function ensureMapInPool(file) {
@@ -270,21 +258,22 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
 
     for (const file of req.files) {
       try {
-        // Sanitize the filename to prevent path traversal attacks
-        const sanitizedName = sanitizeFilename(file.originalname)
+        // Validate filename for security (but don't modify it)
+        // Maniaplanet needs the exact original filename
+        const validatedName = validateFilename(file.originalname)
         
         const tempPath = file.path
-        const finalPath = path.join(MAPS_DIR, sanitizedName)
+        const finalPath = path.join(MAPS_DIR, validatedName)
 
-        // Move file to final location (restore original filename)
+        // Move file to final location with original filename
         fs.renameSync(tempPath, finalPath)
 
         // Small pause to let Maniaplanet process
         await new Promise(r => setTimeout(r, 300))
 
-        // Register map with Maniaplanet server
-        await rpcCall('AddMap', [sanitizedName])
-        added.push(sanitizedName)
+        // Register map with Maniaplanet server using original filename
+        await rpcCall('AddMap', [validatedName])
+        added.push(validatedName)
       } catch (e) {
         console.error(`Could not add map ${file.originalname} to server:`, e.message)
         errors.push({ file: file.originalname, error: e.message })
