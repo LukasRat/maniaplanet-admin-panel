@@ -258,6 +258,7 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
     }
 
     const added = []
+    const skipped = []
     const errors = []
 
     for (const file of req.files) {
@@ -275,10 +276,19 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
         // Small pause to let Maniaplanet detect the new file
         await new Promise(r => setTimeout(r, 300))
 
-        // Register map with Maniaplanet server
-        // The file is already in the server's Maps directory
-        await rpcCall('AddMap', [validatedName])
-        added.push(validatedName)
+        // Check if map already exists in playlist before adding
+        const maps = await rpcCall('GetChallengeList', [1000, 0])
+        const exists = maps.some(m => m.FileName === validatedName)
+        
+        if (exists) {
+          // Map already in playlist, but file was uploaded successfully
+          skipped.push(validatedName)
+          console.log(`Map ${validatedName} already in playlist, skipped AddMap`)
+        } else {
+          // Register map with Maniaplanet server
+          await rpcCall('AddMap', [validatedName])
+          added.push(validatedName)
+        }
       } catch (e) {
         console.error(`Could not add map ${file.originalname} to server:`, e.message)
         errors.push({ file: file.originalname, error: e.message })
@@ -288,6 +298,7 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
     res.json({
       ok: true,
       maps: added,
+      skipped: skipped,
       errors: errors
     })
   } catch (err) {

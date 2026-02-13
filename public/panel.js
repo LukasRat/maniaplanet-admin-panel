@@ -545,8 +545,29 @@ const app = {
 
         if (res.ok) {
           const data = await res.json()
-          status.innerHTML = `<span style="color: var(--success)">Successfully uploaded ${data.maps.length} maps</span>`
-          this.showToast(`Uploaded ${data.maps.length} maps`)
+          const total = (data.maps?.length || 0) + (data.skipped?.length || 0)
+          const newMaps = data.maps?.length || 0
+          const skipped = data.skipped?.length || 0
+          
+          let message = ''
+          if (total > 0) {
+            if (newMaps > 0 && skipped > 0) {
+              const mapsWord = total === 1 ? 'map' : 'maps'
+              const existedWord = skipped === 1 ? 'already existed' : 'already existed'
+              message = `Successfully uploaded ${total} ${mapsWord} (${newMaps} new, ${skipped} ${existedWord})`
+            } else if (newMaps > 0) {
+              const mapsWord = newMaps === 1 ? 'map' : 'maps'
+              message = `Successfully uploaded ${newMaps} new ${mapsWord}`
+            } else if (skipped > 0) {
+              const mapsWord = skipped === 1 ? 'map' : 'maps'
+              message = `${skipped} ${mapsWord} already existed in playlist`
+            }
+          } else {
+            message = 'No maps uploaded'
+          }
+          
+          status.innerHTML = `<span style="color: var(--success)">${message}</span>`
+          this.showToast(message)
           setTimeout(() => status.innerHTML = '', 4000)
           this.refresh()
         } else {
