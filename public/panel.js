@@ -14,7 +14,12 @@ const app = {
   state: {
     currentTab: 'dashboard',
     lastPlayers: [],
-    autoRefresh: null
+    autoRefresh: null,
+    confirmCallback: null,
+    allPlayers: [],
+    allMaps: [],
+    allFiles: [],
+    currentMap: null
   },
 
   // --- Core Functions ---
@@ -49,8 +54,12 @@ const app = {
       // Init Drag & Drop
       this.initDragAndDrop()
 
+      // Update connection status
+      this.updateConnectionStatus(true)
+
     } catch (e) {
       this.showToast(e.message || 'Login failed. Check server.', 'error')
+      this.updateConnectionStatus(false)
     }
   },
 
@@ -80,21 +89,31 @@ const app = {
     document.querySelectorAll('.section').forEach(el => el.classList.remove('active'))
     document.getElementById('tab-dashboard').classList.add('active')
 
+    // Update connection status
+    this.updateConnectionStatus(false)
+
     this.showToast('Logged out successfully', 'success')
   },
 
   async refresh() {
     try {
-      const [statusRes, filesRes, serverInfoRes, rankingsRes, chatRes] = await Promise.all([
+      const [statusRes, filesRes, serverInfoRes, rankingsRes, chatRes, bansRes] = await Promise.all([
         fetch(`${API}/status`),
         fetch(`${API}/maps/files`),
         fetch(`${API}/server/info`).catch(() => null),
         fetch(`${API}/game/rankings`).catch(() => null),
-        fetch(`${API}/chat/lines`).catch(() => null)
+        fetch(`${API}/chat/lines`).catch(() => null),
+        fetch(`${API}/bans/list`).catch(() => null)
       ])
 
       const status = await statusRes.json()
       const files = await filesRes.json()
+
+      // Store data in state for filtering
+      this.state.allPlayers = status.players
+      this.state.allMaps = status.maps
+      this.state.allFiles = files
+      this.state.currentMap = status.currentMap
 
       this.renderDashboard(status)
       this.renderPlayers(status.players)
@@ -118,8 +137,18 @@ const app = {
         this.renderChat(chatLines)
       }
 
+      // Render bans if available
+      if (bansRes && bansRes.ok) {
+        const bans = await bansRes.json()
+        this.renderBans(bans)
+      }
+
+      // Update connection status
+      this.updateConnectionStatus(true)
+
     } catch (e) {
       console.error('Refresh failed', e)
+      this.updateConnectionStatus(false)
     }
   },
 
@@ -192,6 +221,13 @@ const app = {
       const cleanName = this.stripManiaPlanetFormatting(status.currentMap.Name)
       document.getElementById('stat-current').textContent = cleanName
       document.getElementById('stat-current').title = cleanName
+    }
+  },
+
+  updateBanCount(count) {
+    const bansStat = document.getElementById('stat-bans')
+    if (bansStat) {
+      bansStat.textContent = count
     }
   },
 
@@ -285,14 +321,16 @@ const app = {
   // --- API Actions ---
 
   async kick(login) {
-    if (!confirm(`Kick ${login}?`)) return
+    const confirmed = await this.confirm(`Kick ${login}?`, 'Kick Player')
+    if (!confirmed) return
     await this.post('/players/kick', { login })
     this.showToast(`Kicked ${login}`)
     this.refresh()
   },
 
   async ban(login) {
-    if (!confirm(`Ban ${login}?`)) return
+    const confirmed = await this.confirm(`Ban ${login}? This will permanently ban them from the server.`, 'Ban Player')
+    if (!confirmed) return
     await this.post('/players/ban', { login })
     this.showToast(`Banned ${login}`)
     this.refresh()
@@ -306,28 +344,35 @@ const app = {
   // --- Server Management ---
 
   async skipMap() {
-    if (!confirm('Skip to next map?')) return
+    const confirmed = await this.confirm('Skip to next map?', 'Skip Map')
+    if (!confirmed) return
     await this.post('/server/skip-map', {})
     this.showToast('Skipping to next map')
     setTimeout(() => this.refresh(), 1000)
   },
 
   async restartMap() {
-    if (!confirm('Restart current map?')) return
+    const confirmed = await this.confirm('Restart current map?', 'Restart Map')
+    if (!confirmed) return
     await this.post('/server/restart-map', {})
     this.showToast('Restarting map')
     setTimeout(() => this.refresh(), 1000)
   },
 
   async shuffleMaps() {
-    if (!confirm('Shuffle all maps in the playlist?')) return
+    const confirmed = await this.confirm('Shuffle all maps in the playlist?', 'Shuffle Maps')
+    if (!confirmed) return
     await this.post('/maps/shuffle', {})
     this.showToast('Maps shuffled')
     setTimeout(() => this.refresh(), 1000)
   },
 
   async restartServer() {
-    if (!confirm('Restart the game server? This will disconnect all players temporarily.')) return
+    const confirmed = await this.confirm(
+      'Restart the game server? This will disconnect all players temporarily.',
+      'Restart Server'
+    )
+    if (!confirmed) return
     try {
       const response = await fetch(`${API}/server/restart`, {
         method: 'POST',
@@ -366,7 +411,8 @@ const app = {
   },
 
   async restartExpansion() {
-    if (!confirm('Restart the expansion (server controller)?')) return
+    const confirmed = await this.confirm('Restart the expansion (server controller)?', 'Restart Expansion')
+    if (!confirmed) return
     try {
       const response = await fetch(`${API}/server/restart-expansion`, {
         method: 'POST',
@@ -413,7 +459,8 @@ const app = {
   // --- Map Management ---
 
   async removeMap(file) {
-    if (!confirm(`Remove ${file} from playlist?`)) return
+    const confirmed = await this.confirm(`Remove ${file} from playlist?`, 'Remove Map')
+    if (!confirmed) return
     await this.post('/maps/remove', { file })
     this.showToast(`Removed ${file}`)
     this.refresh()
@@ -525,6 +572,194 @@ const app = {
     })
   },
 
+  // --- Connection Status ---
+
+  updateConnectionStatus(connected) {
+    const status = document.getElementById('connection-status')
+    if (!status) return
+    
+    if (connected) {
+      status.className = 'connection-status connected'
+      status.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>Connected</span>'
+    } else {
+      status.className = 'connection-status disconnected'
+      status.innerHTML = '<i class="fa-solid fa-circle-xmark"></i><span>Disconnected</span>'
+    }
+  },
+
+  // --- Custom Confirmation Dialog ---
+
+  confirm(message, title = 'Confirm Action') {
+    return new Promise((resolve) => {
+      const modal = document.getElementById('confirm-modal')
+      document.getElementById('confirm-title').textContent = title
+      document.getElementById('confirm-message').textContent = message
+      
+      this.state.confirmCallback = resolve
+      modal.classList.add('show')
+    })
+  },
+
+  confirmYes() {
+    const modal = document.getElementById('confirm-modal')
+    modal.classList.remove('show')
+    if (this.state.confirmCallback) {
+      this.state.confirmCallback(true)
+      this.state.confirmCallback = null
+    }
+  },
+
+  confirmNo() {
+    const modal = document.getElementById('confirm-modal')
+    modal.classList.remove('show')
+    if (this.state.confirmCallback) {
+      this.state.confirmCallback(false)
+      this.state.confirmCallback = null
+    }
+  },
+
+  // --- Search/Filter Functions ---
+
+  filterPlayers() {
+    const searchTerm = document.getElementById('player-search').value.toLowerCase()
+    const filtered = this.state.allPlayers.filter(p => {
+      const cleanNickName = this.stripManiaPlanetFormatting(p.NickName).toLowerCase()
+      const login = p.Login.toLowerCase()
+      return cleanNickName.includes(searchTerm) || login.includes(searchTerm)
+    })
+    this.renderPlayers(filtered)
+  },
+
+  filterMaps() {
+    const searchTerm = document.getElementById('map-search').value.toLowerCase()
+    
+    // Filter pool maps
+    const filteredPool = this.state.allMaps.filter(m => 
+      m.FileName.toLowerCase().includes(searchTerm)
+    )
+    
+    // Filter files
+    const filteredFiles = this.state.allFiles.filter(f => 
+      f.toLowerCase().includes(searchTerm)
+    )
+    
+    this.renderMaps(filteredFiles, filteredPool, this.state.currentMap)
+  },
+
+  // --- Ban Management ---
+
+  renderBans(bans) {
+    const list = document.getElementById('bans-list')
+    if (!list) return
+    
+    list.innerHTML = ''
+
+    // Update ban count in dashboard
+    this.updateBanCount(bans ? bans.length : 0)
+
+    if (!bans || bans.length === 0) {
+      list.innerHTML = '<div style="padding: 20px; color: var(--text-muted); text-align: center;">No banned players</div>'
+      return
+    }
+
+    bans.forEach(ban => {
+      const div = document.createElement('div')
+      div.className = 'list-item'
+
+      div.innerHTML = `
+        <div class="item-info">
+          <span class="player-login">${this.escapeHtml(ban.Login)}</span>
+        </div>
+        <div class="actions">
+          <button class="btn-sm btn-secondary" onclick="app.unban('${ban.Login}')">
+            <i class="fa-solid fa-unlock"></i> Unban
+          </button>
+        </div>
+      `
+      list.appendChild(div)
+    })
+  },
+
+  async unban(login) {
+    const confirmed = await this.confirm(`Unban ${login}?`, 'Unban Player')
+    if (!confirmed) return
+    
+    await this.post('/bans/unban', { login })
+    this.showToast(`Unbanned ${login}`)
+    this.refresh()
+  },
+
+  async clearBans() {
+    const confirmed = await this.confirm(
+      'This will remove ALL bans from the server. Are you sure?',
+      'Clear All Bans'
+    )
+    if (!confirmed) return
+    
+    await this.post('/bans/clear', {})
+    this.showToast('All bans cleared')
+    this.refresh()
+  },
+
+  // --- Server Settings ---
+
+  async loadSettings() {
+    try {
+      const res = await fetch(`${API}/server/info`)
+      if (!res.ok) throw new Error('Failed to load settings')
+      
+      const info = await res.json()
+      
+      const cleanServerName = this.stripManiaPlanetFormatting(info.serverName)
+      document.getElementById('setting-server-name').value = cleanServerName || ''
+      document.getElementById('setting-max-players').value = info.maxPlayers || ''
+      document.getElementById('setting-max-spectators').value = info.maxSpectators || ''
+      // Don't populate password field for security
+      
+      this.showToast('Settings loaded')
+    } catch (e) {
+      this.showToast('Failed to load settings', 'error')
+    }
+  },
+
+  async saveSettings(event) {
+    event.preventDefault()
+    
+    const confirmed = await this.confirm(
+      'Save these server settings? The changes will take effect immediately.',
+      'Save Settings'
+    )
+    if (!confirmed) return
+    
+    try {
+      const settings = {
+        serverName: document.getElementById('setting-server-name').value,
+        maxPlayers: parseInt(document.getElementById('setting-max-players').value) || undefined,
+        maxSpectators: parseInt(document.getElementById('setting-max-spectators').value) || undefined,
+        password: document.getElementById('setting-server-password').value || ''
+      }
+      
+      // Don't send undefined values
+      if (settings.maxPlayers === 0 || isNaN(settings.maxPlayers)) {
+        settings.maxPlayers = undefined
+      }
+      if (settings.maxSpectators === 0 || isNaN(settings.maxSpectators)) {
+        settings.maxSpectators = undefined
+      }
+      
+      await this.post('/server/settings', settings)
+      this.showToast('Settings saved successfully')
+      
+      // Clear password field after save
+      document.getElementById('setting-server-password').value = ''
+      
+      // Refresh to show updated info
+      setTimeout(() => this.refresh(), 1000)
+    } catch (e) {
+      this.showToast('Failed to save settings', 'error')
+    }
+  },
+
   // --- Drag & Drop ---
 
   initDragAndDrop() {
@@ -625,3 +860,49 @@ const app = {
 
 // Make app global for HTML onclick handlers
 window.app = app
+
+// Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl+R: Manual refresh (prevent default page reload)
+  if (e.ctrlKey && e.key === 'r') {
+    e.preventDefault()
+    if (app.state.autoRefresh) {
+      app.refresh()
+      app.showToast('Data refreshed', 'success')
+    }
+  }
+  
+  // Ctrl+/: Focus search input
+  if (e.ctrlKey && e.key === '/') {
+    e.preventDefault()
+    const currentTab = app.state.currentTab
+    if (currentTab === 'players') {
+      document.getElementById('player-search')?.focus()
+    } else if (currentTab === 'maps') {
+      document.getElementById('map-search')?.focus()
+    }
+  }
+  
+  // Escape: Close modal or clear search
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('confirm-modal')
+    if (modal.classList.contains('show')) {
+      app.confirmNo()
+    } else {
+      const currentTab = app.state.currentTab
+      if (currentTab === 'players') {
+        const searchInput = document.getElementById('player-search')
+        if (searchInput && searchInput.value) {
+          searchInput.value = ''
+          app.filterPlayers()
+        }
+      } else if (currentTab === 'maps') {
+        const searchInput = document.getElementById('map-search')
+        if (searchInput && searchInput.value) {
+          searchInput.value = ''
+          app.filterMaps()
+        }
+      }
+    }
+  }
+})

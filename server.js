@@ -669,6 +669,38 @@ app.get('/api/chat/lines', async (_, res) => {
 })
 
 /* =========================
+   BAN MANAGEMENT
+========================= */
+
+app.get('/api/bans/list', async (req, res) => {
+  try {
+    const banList = await rpcCall('GetBanList', [1000, 0])
+    res.json(banList)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/bans/unban', async (req, res) => {
+  try {
+    const { login } = req.body
+    await rpcCall('UnBan', [login])
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/bans/clear', async (req, res) => {
+  try {
+    await rpcCall('CleanBanList')
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/* =========================
    START
 ========================= */
 
