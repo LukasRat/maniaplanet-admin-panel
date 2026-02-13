@@ -160,13 +160,15 @@ const app = {
    * - Formatting codes: $w (wide), $n (narrow), $o (bold), $i (italic), 
    *   $t (uppercase), $s (shadow), $g (default), $z (reset), 
    *   $< (smaller), $> (larger)
+   * - Escape sequence: $$ (literal dollar sign, replaced with single $)
    * @param {string} text - The text to strip codes from
    * @returns {string} The cleaned text without formatting codes
    */
   stripManiaPlanetFormatting(text) {
     if (!text) return ''
-    // Strip ManiaPlanet codes: color codes ($F, $F00, $FFF) and formatting codes ($w, $n, etc.)
-    return text.replace(/\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g, '')
+    // Strip ManiaPlanet codes: color codes ($F, $F00, $FFF), formatting codes ($w, $n, etc.)
+    // and replace $$ (escape for literal $) with single $
+    return text.replace(/\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g, '').replace(/\$\$/g, '$')
   },
 
   renderDashboard(status) {
