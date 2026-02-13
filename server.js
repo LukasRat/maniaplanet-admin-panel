@@ -155,6 +155,19 @@ async function ensureMapInPool(file) {
   if (!exists) await rpcCall('AddMap', [file])
 }
 
+function getGameModeName(gameModeNumber) {
+  const gameModeNames = {
+    0: 'Script',
+    1: 'Rounds',
+    2: 'TimeAttack',
+    3: 'Team',
+    4: 'Laps',
+    5: 'Cup',
+    6: 'Stunts'
+  }
+  return gameModeNames[gameModeNumber] || `Mode ${gameModeNumber}`
+}
+
 /* =========================
    MULTER
 ========================= */
@@ -213,23 +226,12 @@ app.get('/api/status', async (_, res) => {
       rpcCall('GetGameMode').catch(() => null)
     ])
 
-    // Map game mode numbers to names
-    const gameModeNames = {
-      0: 'Script',
-      1: 'Rounds',
-      2: 'TimeAttack',
-      3: 'Team',
-      4: 'Laps',
-      5: 'Cup',
-      6: 'Stunts'
-    }
-
     res.json({ 
       players, 
       maps, 
       currentMap, 
       banCount: banList.length,
-      gameMode: gameMode !== null ? gameModeNames[gameMode] || `Mode ${gameMode}` : 'Unknown'
+      gameMode: gameMode !== null ? getGameModeName(gameMode) : 'Unknown'
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -551,11 +553,9 @@ app.get('/api/players/detailed', async (_, res) => {
       players.map(async (p) => {
         try {
           const info = await rpcCall('GetDetailedPlayerInfo', [p.Login])
-          // Include latency/ping information if available
           return { 
             ...p, 
-            ...info,
-            Ping: info.LadderStats?.LastMatchScore || 0
+            ...info
           }
         } catch {
           return p
@@ -735,7 +735,7 @@ app.get('/api/votes/status', async (_, res) => {
   try {
     const callVoteRatio = await rpcCall('GetCallVoteRatio').catch(() => null)
     res.json({
-      callVoteRatio: callVoteRatio || -1
+      callVoteRatio: callVoteRatio
     })
   } catch (err) {
     res.status(500).json({ error: err.message })

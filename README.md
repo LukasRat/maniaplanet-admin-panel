@@ -52,17 +52,17 @@ Server information display:
 - Version information
 - Maximum players and spectators
 
-**Network Statistics:**
+Network Statistics:
 - Server uptime (hours and minutes)
 - Network receive rate (KB/s)
 - Network send rate (KB/s)
-- Total connections
+- Total data received (MB)
 
-**NEW: Vote System Information**
+Vote System Information:
 - Call vote ratio (percentage required for votes to pass)
 - Vote system status (enabled/disabled)
 
-**NEW: Server Settings Editor**
+Server Settings Editor:
 - Edit server name without restarting
 - Adjust max players and spectators on-the-fly
 - Update server password
