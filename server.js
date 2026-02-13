@@ -7,6 +7,7 @@ const express = require('express')
 const cors = require('cors')
 const path = require('path')
 const fs = require('fs')
+const fsPromises = require('fs').promises
 const multer = require('multer')
 const gbxremote = require('gbxremote')
 const { exec } = require('child_process')
@@ -29,8 +30,24 @@ const RPC_HOST = '127.0.0.1'
 const RPC_PORT = 5000
 const RPC_LOGIN = 'SuperAdmin'
 
-// FIXED: Use local path to avoid permission issues
-const MAPS_DIR = path.join(__dirname, 'maps_storage')
+// MAPS_DIR must point to your Maniaplanet server's UserData/Maps directory
+// This is REQUIRED for map uploads to work!
+// 
+// Examples:
+//   Linux: '/home/user/Desktop/maniaplanetserver/UserData/Maps'
+//   Windows: 'C:\\ManiaPlanetServer\\UserData\\Maps'
+//   Docker: '/server/UserData/Maps'
+// 
+// IMPORTANT: 
+// - This must be the ACTUAL path where your Maniaplanet server's Maps directory is located
+// - The admin panel must have write permissions to this directory
+// - Map files will be saved directly to this directory
+const MAPS_DIR = process.env.MANIAPLANET_MAPS_DIR || '/home/user/Desktop/maniaplanetserver/UserData/Maps'
+
+// Ensure maps directory exists
+if (!fs.existsSync(MAPS_DIR)) {
+  fs.mkdirSync(MAPS_DIR, { recursive: true })
+}
 
 /* =========================
    EXPRESS
@@ -109,6 +126,29 @@ async function rpcCall(method, params = []) {
    HELPERS
 ========================= */
 
+function validateFilename(filename) {
+  // Validate the extension
+  if (!/\.(?:Map\.)?Gbx$/i.test(filename)) {
+    throw new Error('Invalid map file extension. File must end with .gbx or .Map.Gbx')
+  }
+  
+  // Use basename to strip any path components (security: prevent directory traversal)
+  const basename = path.basename(filename)
+  
+  // Check for dangerous patterns (path traversal attempts)
+  if (basename.includes('..') || basename !== filename) {
+    throw new Error('Invalid filename: path traversal detected')
+  }
+  
+  // Ensure filename is not empty or just dots
+  if (!basename || /^\.+$/.test(basename)) {
+    throw new Error('Invalid filename')
+  }
+  
+  // Return the original filename (Maniaplanet needs exact filename)
+  return basename
+}
+
 async function ensureMapInPool(file) {
   const maps = await rpcCall('GetChallengeList', [1000, 0])
   const exists = maps.some(m => m.FileName === file)
@@ -120,6 +160,9 @@ async function ensureMapInPool(file) {
 ========================= */
 const upload = multer({
   dest: MAPS_DIR,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit for map files
+  }
 })
 
 
@@ -215,29 +258,48 @@ app.post('/api/maps/upload', upload.array('map'), async (req, res) => {
     }
 
     const added = []
+    const skipped = []
+    const errors = []
 
     for (const file of req.files) {
-      const temp = file.path
-      const final = path.join(MAPS_DIR, file.originalname)
-
-      fs.renameSync(temp, final)
-
-      // kleine Pause, damit Maniaplanet sauber nachkommt
-      await new Promise(r => setTimeout(r, 300))
-
       try {
-        await rpcCall('AddMap', [file.originalname])
-        added.push(file.originalname)
+        // Validate filename for security (but don't modify it)
+        // Maniaplanet needs the exact original filename
+        const validatedName = validateFilename(file.originalname)
+        
+        const tempPath = file.path
+        const finalPath = path.join(MAPS_DIR, validatedName)
+
+        // Move file directly to the server's Maps directory
+        fs.renameSync(tempPath, finalPath)
+
+        // Small pause to let Maniaplanet detect the new file
+        await new Promise(r => setTimeout(r, 300))
+
+        // Check if map already exists in playlist before adding
+        const maps = await rpcCall('GetChallengeList', [1000, 0])
+        const exists = maps.some(m => m.FileName === validatedName)
+        
+        if (exists) {
+          // Map already in playlist, but file was uploaded successfully
+          skipped.push(validatedName)
+          console.log(`Map ${validatedName} already in playlist, skipped AddMap`)
+        } else {
+          // Register map with Maniaplanet server
+          await rpcCall('AddMap', [validatedName])
+          added.push(validatedName)
+        }
       } catch (e) {
-        console.error("Could not add map to server (maybe offline)", e)
-        // We still uploaded it, so we count it
-        added.push(file.originalname)
+        console.error(`Could not add map ${file.originalname} to server:`, e.message)
+        errors.push({ file: file.originalname, error: e.message })
       }
     }
 
     res.json({
       ok: true,
-      maps: added
+      maps: added,
+      skipped: skipped,
+      errors: errors
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
