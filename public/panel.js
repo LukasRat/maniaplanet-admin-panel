@@ -2,8 +2,11 @@ const API = `${window.location.origin}/api`  // Use current host instead of hard
 
 // ManiaPlanet formatting code patterns
 // Combined pattern for stripping both color and formatting codes in a single pass
-const MANIAPLANET_FORMAT_CODES_PATTERN = /\$(?:[0-9a-fA-F]{1,3}|[wnoitsgz<>])/g
+// Format codes: $w (wide), $n (narrow), $o (bold), $i (italic), $t (uppercase), 
+//               $s (shadow), $g (default), $z (reset), $h (hide), $< (smaller), $> (larger)
+const MANIAPLANET_FORMAT_CODES_PATTERN = /\$(?:[0-9a-fA-F]{1,3}|[wnoitsgzh<>])/g
 const MANIAPLANET_ESCAPE_PATTERN = /\$\$/g  // Escape sequence for literal dollar sign
+const PLACEHOLDER_CHAR = '\uE000'  // Unicode private use character for temporary placeholder
 
 // Application State & Logic
 const app = {
@@ -163,7 +166,7 @@ const app = {
    * Removes color codes and special formatting codes:
    * - Color codes: $F, $F00, $FFF (hex digits, 1-3 length)
    * - Formatting codes: $w (wide), $n (narrow), $o (bold), $i (italic), 
-   *   $t (uppercase), $s (shadow), $g (default), $z (reset), 
+   *   $t (uppercase), $s (shadow), $g (default), $z (reset), $h (hide),
    *   $< (smaller), $> (larger)
    * - Escape sequence: $$ (literal dollar sign, replaced with single $)
    * @param {string} text - The text to strip codes from
@@ -175,9 +178,9 @@ const app = {
     // Then strip ManiaPlanet formatting codes
     // Finally restore literal dollar signs
     return text
-      .replace(MANIAPLANET_ESCAPE_PATTERN, '\x00')  // Temporarily replace $$ with null char
+      .replace(MANIAPLANET_ESCAPE_PATTERN, PLACEHOLDER_CHAR)  // Temporarily replace $$
       .replace(MANIAPLANET_FORMAT_CODES_PATTERN, '')  // Strip all formatting codes
-      .replace(/\x00/g, '$')  // Restore literal $
+      .replace(new RegExp(PLACEHOLDER_CHAR, 'g'), '$')  // Restore literal $
   },
 
   renderDashboard(status) {
