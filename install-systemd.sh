@@ -114,8 +114,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=$INSTALL_DIR
-ReadWritePaths=$MAPS_DIR
+ReadWritePaths=$INSTALL_DIR $MAPS_DIR
 
 [Install]
 WantedBy=multi-user.target

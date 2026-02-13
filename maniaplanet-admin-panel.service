@@ -26,8 +26,8 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/opt/maniaplanet-admin-panel
-# Allow write access to maps directory if different from app directory
-#ReadWritePaths=/path/to/maniaplanetserver/UserData/Maps
+# If maps directory is different from app directory, add it to the same line:
+# ReadWritePaths=/opt/maniaplanet-admin-panel /path/to/maniaplanetserver/UserData/Maps
 
 [Install]
 WantedBy=multi-user.target
