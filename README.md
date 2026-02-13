@@ -230,7 +230,7 @@ The admin panel includes a server restart feature that uses the `restart.sh` scr
 - **Permission denied** - The script may need sudo. Either configure passwordless sudo or add `sudo` before the restart command.
 - **Script not found** - Make sure restart.sh is in the same directory as server.js and is executable.
 
-**Note:** The admin panel (Node.js) runs separately from your ManiaPlanet game server. This script restarts the **game server**, not the admin panel.
+> **Note:** The admin panel (Node.js) runs separately from your ManiaPlanet game server. This script restarts the **game server**, not the admin panel.
 
 ### Configuring Expansion Restart (Optional)
 
@@ -262,7 +262,7 @@ The script will:
 - Wait 10 seconds
 - Start the expansion using `./run --start`
 
-**Note:** This feature is optional and only needed if you run a ManiaPlanet expansion/controller alongside your game server.
+> **Note:** This feature is optional and only needed if you run a ManiaPlanet expansion/controller alongside your game server.
 
 ## Troubleshooting
 
