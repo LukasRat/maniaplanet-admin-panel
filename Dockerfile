@@ -1,14 +1,15 @@
 # Use Node.js 20 LTS as base image
-FROM node:20-alpine
+FROM node:20-slim
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (npm install is more reliable than npm ci on alpine sometimes)
+# Using --prefer-offline and --no-audit for faster, more stable installs
+RUN npm install --prefer-offline --no-audit
 
 # Copy application files
 COPY . .
