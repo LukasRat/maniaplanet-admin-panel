@@ -218,6 +218,8 @@ For easier management, use Docker Compose:
    ```bash
    cp .env.example .env
    ```
+   
+   > **Important:** The file must be named exactly `.env` (with a dot at the beginning, no extension). This is the standard convention that Docker Compose automatically reads. Do NOT name it `.env.txt`, `env`, or anything else.
 
 2. **Edit `.env` to configure your setup** (optional, defaults work for most cases):
    ```env
@@ -279,6 +281,12 @@ docker run -d \
 **Using Docker Compose:**
 
 Create a `.env` file in the same directory as `docker-compose.yml`:
+```bash
+cp .env.example .env
+# Then edit .env with your values
+```
+
+Example `.env` content:
 ```env
 HTTP_PORT=8080
 RPC_HOST=192.168.1.100
@@ -290,7 +298,7 @@ Then run:
 docker-compose up -d
 ```
 
-The `.env` file will automatically be used by Docker Compose to set environment variables.
+> **Note:** The file must be named `.env` (exactly) for Docker Compose to automatically read it.
 
 #### Publishing and Using Pre-built Docker Images
 
@@ -532,6 +540,7 @@ This happens because `node_modules/` is not included in the repository (it's in 
 - **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on the correct port (default: 5000). Use `RPC_HOST` and `RPC_PORT` environment variables to configure connection.
 - **Port already in use:** Change `HTTP_PORT` environment variable to use a different port. For Docker: `-e HTTP_PORT=8080 -p 8080:8080`
 - **Custom ports not working:** Ensure you've set both the environment variable AND updated port mappings in Docker (e.g., `-p 8080:8080` when using `HTTP_PORT=8080`)
+- **Environment variables not loading:** Make sure your configuration file is named exactly `.env` (not `.env.txt`, `env`, or anything else). Use `cp .env.example .env` to create it properly.
 
 ## 📸 Features Showcase
 
