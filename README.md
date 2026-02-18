@@ -785,21 +785,27 @@ docker ps  # Should show 0.0.0.0:3200->3200/tcp
 
 **This is a persistent port mapping issue.** Docker Compose might not be clearing the old configuration properly.
 
-**Quick Fix:**
+**🚨 IMMEDIATE FIX - If you're frustrated and just want it to work:**
 ```bash
-# Use the automated reset script
+# Run the troubleshooter first to diagnose
+./troubleshoot-port.sh
+
+# Then use the automated reset
 ./reset-port.sh 3200
 ```
 
+**📖 Quick guides:**
+- **[IMMEDIATE-FIX.md](IMMEDIATE-FIX.md)** - Exact step-by-step commands for your situation
+- **[PERSISTENT-PORT-ISSUE.md](PERSISTENT-PORT-ISSUE.md)** - Advanced troubleshooting
+
 **Or manually:**
 ```bash
-# Complete cleanup
+# Complete cleanup with both compose files
 docker-compose down -v
+docker-compose -f docker-compose.standalone.yml down -v 2>/dev/null
 docker rm -f maniaplanet-admin-panel
-docker-compose --env-file .env up -d --force-recreate
+docker-compose --env-file .env up -d --force-recreate --remove-orphans
 ```
-
-**📖 See detailed guide:** [PERSISTENT-PORT-ISSUE.md](PERSISTENT-PORT-ISSUE.md) for advanced troubleshooting.
 
 ## 📸 Features Showcase
 

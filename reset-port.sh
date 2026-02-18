@@ -12,9 +12,22 @@ echo ""
 echo "Target port: $PORT"
 echo ""
 
-# 1. Stop everything
+# Detect which docker-compose file to use
+COMPOSE_FILE="docker-compose.yml"
+if [ -f "docker-compose.standalone.yml" ]; then
+    # Check if container was created with standalone
+    if docker inspect maniaplanet-admin-panel 2>/dev/null | grep -q "docker-compose.standalone.yml"; then
+        COMPOSE_FILE="docker-compose.standalone.yml"
+        echo "Detected: Using docker-compose.standalone.yml"
+    fi
+fi
+echo "Using: $COMPOSE_FILE"
+echo ""
+
+# 1. Stop everything (both compose files to be safe)
 echo "1. Stopping all containers..."
 docker-compose down -v 2>/dev/null
+docker-compose -f docker-compose.standalone.yml down -v 2>/dev/null
 
 # 2. Remove any orphaned containers
 echo "2. Removing orphaned containers..."
@@ -77,7 +90,11 @@ docker system prune -f > /dev/null 2>&1
 
 # 7. Recreate with explicit env file
 echo "7. Recreating containers with new configuration..."
-docker-compose --env-file .env up -d --force-recreate
+if [ "$COMPOSE_FILE" = "docker-compose.standalone.yml" ]; then
+    docker-compose -f docker-compose.standalone.yml --env-file .env up -d --force-recreate --remove-orphans
+else
+    docker-compose --env-file .env up -d --force-recreate --remove-orphans
+fi
 
 # 8. Wait for startup
 echo "8. Waiting for container startup..."
