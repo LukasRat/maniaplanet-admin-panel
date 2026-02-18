@@ -249,6 +249,20 @@ For easier management, use Docker Compose:
    docker-compose down
    ```
 
+6. **Changing configuration (e.g., ports):**
+   
+   > **Important:** After changing values in `.env` (like `HTTP_PORT`), you must recreate the container:
+   
+   ```bash
+   # Stop and remove the container
+   docker-compose down
+   
+   # Recreate with new configuration
+   docker-compose up -d
+   ```
+   
+   **Note:** Simply using `docker-compose restart` will NOT reload environment variables from `.env`. You must use `down` followed by `up -d`.
+
 #### Integrating with Existing ManiaPlanet Server (Docker)
 
 If you already have a ManiaPlanet dedicated server running in Docker (e.g., using `ghcr.io/skorlok/expansion`), you can integrate the admin panel with it:
@@ -601,8 +615,70 @@ This happens because `node_modules/` is not included in the repository (it's in 
 
 - **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on the correct port (default: 5000). Use `RPC_HOST` and `RPC_PORT` environment variables to configure connection.
 - **Port already in use:** Change `HTTP_PORT` environment variable to use a different port. For Docker: `-e HTTP_PORT=8080 -p 8080:8080`
-- **Custom ports not working:** Ensure you've set both the environment variable AND updated port mappings in Docker (e.g., `-p 8080:8080` when using `HTTP_PORT=8080`)
 - **Environment variables not loading:** Make sure your configuration file is named exactly `.env` (not `.env.txt`, `env`, or anything else). Use `cp .env.example .env` to create it properly.
+
+### Custom Port Not Accessible
+
+**Problem:** Container not accessible on custom port (e.g., `http://192.168.178.43:3200/`) after setting `HTTP_PORT=3200` in `.env`
+
+**Cause:** Docker containers must be recreated after changing environment variables in `.env` file.
+
+**Solution:**
+
+1. **Stop and remove the existing container:**
+   ```bash
+   docker-compose down
+   ```
+
+2. **Recreate the container with new port configuration:**
+   ```bash
+   docker-compose up -d
+   ```
+   
+   **Important:** Use `down` and then `up -d`, NOT just `restart`. The `restart` command does not reload environment variables from `.env`.
+
+3. **Verify the port mapping:**
+   ```bash
+   docker ps
+   ```
+   
+   Look for the port mapping in the output. You should see something like:
+   ```
+   0.0.0.0:3200->3200/tcp
+   ```
+
+4. **Check if the container is listening on the correct port:**
+   ```bash
+   docker logs maniaplanet-admin-panel
+   ```
+   
+   You should see:
+   ```
+   📍 Local:    http://localhost:3200
+   🌐 Network:  http://0.0.0.0:3200
+   ```
+
+5. **Test local access first:**
+   ```bash
+   curl http://localhost:3200
+   ```
+   
+   If this works but external access doesn't, check your firewall settings.
+
+6. **Verify network accessibility:**
+   - Ensure your firewall allows incoming connections on port 3200
+   - On Linux: `sudo ufw allow 3200/tcp` (if using UFW)
+   - On Windows: Check Windows Firewall settings
+   - Check your router/network firewall if accessing from different network
+
+**Quick checklist:**
+- [ ] Created `.env` file with `HTTP_PORT=3200`
+- [ ] Ran `docker-compose down` to remove old container
+- [ ] Ran `docker-compose up -d` to create new container with updated port
+- [ ] Verified port mapping with `docker ps`
+- [ ] Checked container logs for correct port
+- [ ] Tested local access with `curl http://localhost:3200`
+- [ ] Checked firewall rules for port 3200
 
 ## 📸 Features Showcase
 
