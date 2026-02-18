@@ -75,7 +75,14 @@ if echo "$PORT_MAP" | grep -q "$PORT"; then
 else
     echo "   ✗ ERROR: Port $PORT is NOT mapped correctly!"
     echo "     Current mapping: $PORT_MAP"
-    echo "     Action needed: docker-compose down && docker-compose up -d"
+    echo ""
+    echo "   Quick fix:"
+    echo "     docker-compose down && docker-compose up -d"
+    echo ""
+    echo "   If that doesn't work (persistent issue):"
+    echo "     ./reset-port.sh $PORT"
+    echo ""
+    echo "   Or see: PERSISTENT-PORT-ISSUE.md"
     exit 1
 fi
 echo ""

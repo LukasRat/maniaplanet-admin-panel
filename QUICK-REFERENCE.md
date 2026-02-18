@@ -71,6 +71,13 @@ docker-compose down
 docker-compose up -d
 ```
 
+**If that doesn't work (persistent issue):**
+```bash
+./reset-port.sh 3200
+```
+
+**See:** [PERSISTENT-PORT-ISSUE.md](PERSISTENT-PORT-ISSUE.md)
+
 **Then access at:**
 - Local: `http://localhost:3200`
 - Network: `http://YOUR_HOST_IP:3200`

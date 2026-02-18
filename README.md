@@ -779,6 +779,28 @@ docker ps  # Should show 0.0.0.0:3200->3200/tcp
 - [ ] Tested local access with `curl http://localhost:3200`
 - [ ] Checked firewall rules for port 3200
 
+### Port Still Wrong After `docker-compose down && up`?
+
+**Problem:** Port mapping still shows old port (e.g., 3100) even after running `docker-compose down && docker-compose up -d`.
+
+**This is a persistent port mapping issue.** Docker Compose might not be clearing the old configuration properly.
+
+**Quick Fix:**
+```bash
+# Use the automated reset script
+./reset-port.sh 3200
+```
+
+**Or manually:**
+```bash
+# Complete cleanup
+docker-compose down -v
+docker rm -f maniaplanet-admin-panel
+docker-compose --env-file .env up -d --force-recreate
+```
+
+**📖 See detailed guide:** [PERSISTENT-PORT-ISSUE.md](PERSISTENT-PORT-ISSUE.md) for advanced troubleshooting.
+
 ## 📸 Features Showcase
 
 ### Modern Dark Theme
