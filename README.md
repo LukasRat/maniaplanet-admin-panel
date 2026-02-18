@@ -181,15 +181,27 @@ If you prefer using Docker, you can run the admin panel in a containerized envir
    ```
 
 3. **Run the container:**
+   
+   **On Linux (recommended - allows connection to localhost):**
+   ```bash
+   docker run -d \
+     --name maniaplanet-admin-panel \
+     --network host \
+     -e MANIAPLANET_MAPS_DIR=/maps \
+     -v /path/to/your/maniaplanet/UserData/Maps:/maps \
+     maniaplanet-admin-panel
+   ```
+   
+   **On Windows/Mac (or without host network):**
    ```bash
    docker run -d \
      --name maniaplanet-admin-panel \
      -p 3100:3100 \
      -e MANIAPLANET_MAPS_DIR=/maps \
      -v /path/to/your/maniaplanet/UserData/Maps:/maps \
-     --network host \
      maniaplanet-admin-panel
    ```
+   > **Note**: On Windows/Mac, you'll need to update `RPC_HOST` in `server.js` to your host machine's IP address instead of `127.0.0.1` to connect to the ManiaPlanet server.
    
    **Important**: Replace `/path/to/your/maniaplanet/UserData/Maps` with the actual path to your ManiaPlanet server's Maps directory.
 
