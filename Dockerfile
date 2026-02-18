@@ -17,15 +17,21 @@ COPY . .
 # Create directory for map storage (can be overridden with volume mount)
 RUN mkdir -p /maps
 
-# Expose the application port
+# Expose the application port (default 3100, configurable via HTTP_PORT)
 EXPOSE 3100
 
-# Set environment variable for maps directory (can be overridden)
-ENV MANIAPLANET_MAPS_DIR=/maps
+# Set environment variables with defaults
+ENV MANIAPLANET_MAPS_DIR=/maps \
+    HTTP_PORT=3100 \
+    HTTP_HOST=0.0.0.0 \
+    RPC_HOST=127.0.0.1 \
+    RPC_PORT=5000 \
+    RPC_LOGIN=SuperAdmin
 
 # Health check to verify the application is running
+# Uses HTTP_PORT environment variable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3100', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "const port = process.env.HTTP_PORT || 3100; require('http').get('http://localhost:' + port, (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Run the application
 CMD ["npm", "start"]

@@ -3,10 +3,17 @@ services:
     build: .
     container_name: maniaplanet-admin-panel
     ports:
-      - "3100:3100"
+      - "${HTTP_PORT:-3100}:${HTTP_PORT:-3100}"
     environment:
-      # Override these values in a .env file or pass them via command line
-      - MANIAPLANET_MAPS_DIR=/maps
+      # Application Configuration
+      - HTTP_PORT=${HTTP_PORT:-3100}
+      - HTTP_HOST=${HTTP_HOST:-0.0.0.0}
+      # ManiaPlanet Server Connection
+      - RPC_HOST=${RPC_HOST:-127.0.0.1}
+      - RPC_PORT=${RPC_PORT:-5000}
+      - RPC_LOGIN=${RPC_LOGIN:-SuperAdmin}
+      # Maps Directory
+      - MANIAPLANET_MAPS_DIR=${MANIAPLANET_MAPS_DIR:-/maps}
     volumes:
       # Mount your ManiaPlanet server's Maps directory here
       # Example: ./maniaplanet-server/UserData/Maps:/maps
