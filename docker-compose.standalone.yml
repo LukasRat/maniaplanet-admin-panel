@@ -1,0 +1,43 @@
+# Docker Compose configuration for ManiaPlanet Admin Panel only
+# Use this file if you already have a running ManiaPlanet dedicated server
+# 
+# Usage:
+#   docker-compose -f docker-compose.standalone.yml up -d
+#
+# Prerequisites:
+#   1. Create a .env file: cp .env.example .env
+#   2. Edit .env and set:
+#      - RPC_HOST=dedicated_stadium (or your container name)
+#      - MAPS_PATH=./Maps/ (path to your Maps directory)
+#   3. Ensure the xmlrpc-network exists:
+#      docker network create xmlrpc-network
+#   4. Your dedicated server must be on the same network
+
+services:
+  maniaplanet-admin-panel:
+    build: .
+    container_name: maniaplanet-admin-panel
+    ports:
+      - "${HTTP_PORT:-3100}:${HTTP_PORT:-3100}"
+    environment:
+      # Application Configuration
+      - HTTP_PORT=${HTTP_PORT:-3100}
+      - HTTP_HOST=${HTTP_HOST:-0.0.0.0}
+      # ManiaPlanet Server Connection
+      # Set RPC_HOST to your dedicated server container name
+      - RPC_HOST=${RPC_HOST:-dedicated_stadium}
+      - RPC_PORT=${RPC_PORT:-5000}
+      - RPC_LOGIN=${RPC_LOGIN:-SuperAdmin}
+      # Maps Directory
+      - MANIAPLANET_MAPS_DIR=${MANIAPLANET_MAPS_DIR:-/maps}
+    volumes:
+      # Mount the same Maps directory as your dedicated server
+      - ${MAPS_PATH:-./Maps/}:/maps
+    restart: unless-stopped
+    networks:
+      # Connect to the same network as your dedicated server
+      - xmlrpc-network
+
+networks:
+  xmlrpc-network:
+    external: true

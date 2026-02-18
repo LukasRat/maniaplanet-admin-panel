@@ -249,6 +249,68 @@ For easier management, use Docker Compose:
    docker-compose down
    ```
 
+#### Integrating with Existing ManiaPlanet Server (Docker)
+
+If you already have a ManiaPlanet dedicated server running in Docker (e.g., using `ghcr.io/skorlok/expansion`), you can integrate the admin panel with it:
+
+1. **Use the standalone configuration:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Edit `.env` with your server configuration:**
+   ```env
+   # Set RPC_HOST to your dedicated server container name
+   RPC_HOST=dedicated_stadium
+   
+   # Set the Maps path to match your server's Maps directory
+   MAPS_PATH=./Maps/
+   
+   # Other settings (use defaults if unsure)
+   HTTP_PORT=3100
+   RPC_PORT=5000
+   RPC_LOGIN=SuperAdmin
+   ```
+
+3. **Option A: Use the full docker-compose.yml**
+   
+   The main `docker-compose.yml` includes your complete setup (admin panel + dedicated server + expansion).
+   Simply run:
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Option B: Use standalone configuration (if server is already running)**
+   
+   If your dedicated server is already running separately:
+   ```bash
+   docker-compose -f docker-compose.standalone.yml up -d
+   ```
+
+5. **Network Requirements:**
+   - The admin panel must be on the same Docker network as your dedicated server
+   - Default network name: `xmlrpc-network`
+   - If the network doesn't exist, create it:
+     ```bash
+     docker network create xmlrpc-network
+     ```
+   - Ensure your dedicated server container is connected to this network
+
+6. **Verify the connection:**
+   ```bash
+   # Check if containers are on the same network
+   docker network inspect xmlrpc-network
+   
+   # View admin panel logs
+   docker logs maniaplanet-admin-panel
+   ```
+
+**Key Configuration Points:**
+- `RPC_HOST` should be set to your dedicated server's container name (e.g., `dedicated_stadium`)
+- `MAPS_PATH` should point to the same directory your dedicated server uses for maps
+- Both containers must be on the same Docker network for XML-RPC communication
+- The dedicated server's XML-RPC must be enabled (usually on port 5000)
+
 #### Docker Configuration Notes
 
 - **Network Mode**: Use `--network host` (Linux) to allow the container to access the ManiaPlanet server on `127.0.0.1:5000`.

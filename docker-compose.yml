@@ -9,35 +9,76 @@ services:
       - HTTP_PORT=${HTTP_PORT:-3100}
       - HTTP_HOST=${HTTP_HOST:-0.0.0.0}
       # ManiaPlanet Server Connection
-      - RPC_HOST=${RPC_HOST:-127.0.0.1}
+      # NOTE: When using external dedicated server, set RPC_HOST to the container name
+      - RPC_HOST=${RPC_HOST:-dedicated_stadium}
       - RPC_PORT=${RPC_PORT:-5000}
       - RPC_LOGIN=${RPC_LOGIN:-SuperAdmin}
       # Maps Directory
       - MANIAPLANET_MAPS_DIR=${MANIAPLANET_MAPS_DIR:-/maps}
     volumes:
-      # Mount your ManiaPlanet server's Maps directory here
-      # Example: ./maniaplanet-server/UserData/Maps:/maps
-      - maps-data:/maps
+      # Mount the same Maps directory as your dedicated server
+      # This should match the path in your dedicated server's volume mount
+      - ${MAPS_PATH:-./Maps/}:/maps
     restart: unless-stopped
+    depends_on:
+      - dedicated
     networks:
-      - maniaplanet-network
+      # Connect to the same network as your dedicated server for XML-RPC communication
+      - xmlrpc-network
 
-  # Example: If your ManiaPlanet server is also running in Docker
-  # Uncomment and configure this section if needed
-  # maniaplanet-server:
-  #   image: your-maniaplanet-server-image
-  #   container_name: maniaplanet-server
-  #   ports:
-  #     - "5000:5000"  # XML-RPC port
-  #     - "2350:2350"  # Game port
-  #   volumes:
-  #     - maps-data:/server/UserData/Maps
-  #   networks:
-  #     - maniaplanet-network
+  # Your existing ManiaPlanet dedicated server setup
+  # This section is included for reference - you may already have this running
+  expansion:
+    image: ghcr.io/skorlok/expansion:combined
+    restart: unless-stopped
+    container_name: expansion_stadium
+    depends_on:
+      dedicated:
+        condition: service_started
+        restart: true
+    external_links:
+      - database
+    volumes:
+      - ./eXpConfig/:/app/controller/config/
+      - ./Backups/:/app/controller/backup/
+      - ../../Logs/:/app/controller/logs/
+      - ./Config/:/app/dedicated/UserData/Config/
+      - ./Maps/:/app/dedicated/UserData/Maps/
+      - ../../Replays/:/app/dedicated/UserData/Replays/
+      - eXp_ServerNeighborhood:/app/ServerNeighborhood/
+    networks:
+      - xmlrpc-network
+      - database-network
+
+  dedicated:
+    image: ghcr.io/skorlok/expansion:mpserver
+    restart: unless-stopped
+    container_name: dedicated_stadium
+    environment:
+#     GAME_SETTINGS: "MatchSettings/maplist.txt"
+      DEDICATED_CFG: "dedicated_cfg.txt"
+      RESPAWN_DURATION: 500
+      OUTRO_DURATION: 4000
+      OUTRO_SCORETABLE_TIME: 500
+    ports:
+      - "2354:2354/tcp"
+      - "2354:2354/udp"
+      - "3454:3454/tcp"
+      - "3454:3454/udp"
+    volumes:
+      - ./Config/:/app/dedicated/UserData/Config/
+      - ./Maps/:/app/dedicated/UserData/Maps/
+      - ../../PacksManiaPlanet/:/app/dedicated/UserData/Packs/
+      - ../../Replays/:/app/dedicated/UserData/Replays/
+    networks:
+      - xmlrpc-network
 
 volumes:
-  maps-data:
+  eXp_ServerNeighborhood:
+    external: true
 
 networks:
-  maniaplanet-network:
-    driver: bridge
+  xmlrpc-network:
+    external: true
+  database-network:
+    external: true
