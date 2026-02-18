@@ -1,0 +1,36 @@
+services:
+  maniaplanet-admin-panel:
+    build: .
+    container_name: maniaplanet-admin-panel
+    ports:
+      - "3100:3100"
+    environment:
+      # Override these values in a .env file or pass them via command line
+      - MANIAPLANET_MAPS_DIR=/maps
+    volumes:
+      # Mount your ManiaPlanet server's Maps directory here
+      # Example: ./maniaplanet-server/UserData/Maps:/maps
+      - maps-data:/maps
+    restart: unless-stopped
+    networks:
+      - maniaplanet-network
+
+  # Example: If your ManiaPlanet server is also running in Docker
+  # Uncomment and configure this section if needed
+  # maniaplanet-server:
+  #   image: your-maniaplanet-server-image
+  #   container_name: maniaplanet-server
+  #   ports:
+  #     - "5000:5000"  # XML-RPC port
+  #     - "2350:2350"  # Game port
+  #   volumes:
+  #     - maps-data:/server/UserData/Maps
+  #   networks:
+  #     - maniaplanet-network
+
+volumes:
+  maps-data:
+
+networks:
+  maniaplanet-network:
+    driver: bridge

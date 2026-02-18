@@ -1,0 +1,44 @@
+# Node modules (will be installed in container)
+node_modules/
+
+# Git files
+.git
+.gitignore
+
+# Documentation
+*.md
+image.png
+
+# Log files
+*.log
+
+# Environment files
+.env
+
+# Backup files
+*.bkp
+*_bkp
+
+# Maps storage (should be volume mounted)
+maps_storage/
+
+# Temporary files
+tmp/
+.tmp
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# AI assistant files
+.gemini/
+
+# Screenshots
+screenshot.png

@@ -163,6 +163,89 @@ This ensures a clean, professional appearance while maintaining full compatibili
 5. Access the panel:
    Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
 
+### Docker Installation (Alternative)
+
+If you prefer using Docker, you can run the admin panel in a containerized environment:
+
+#### Quick Start with Docker
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/LukasRat/maniaplanet-admin-panel.git
+   cd maniaplanet-admin-panel
+   ```
+
+2. **Build the Docker image:**
+   ```bash
+   docker build -t maniaplanet-admin-panel .
+   ```
+
+3. **Run the container:**
+   ```bash
+   docker run -d \
+     --name maniaplanet-admin-panel \
+     -p 3100:3100 \
+     -e MANIAPLANET_MAPS_DIR=/maps \
+     -v /path/to/your/maniaplanet/UserData/Maps:/maps \
+     --network host \
+     maniaplanet-admin-panel
+   ```
+   
+   **Important**: Replace `/path/to/your/maniaplanet/UserData/Maps` with the actual path to your ManiaPlanet server's Maps directory.
+
+4. **Access the panel:**
+   Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
+
+#### Using Docker Compose (Recommended)
+
+For easier management, use Docker Compose:
+
+1. **Create or edit `docker-compose.yml`** (already included in the repository):
+   ```yaml
+   version: '3.8'
+   
+   services:
+     maniaplanet-admin-panel:
+       build: .
+       container_name: maniaplanet-admin-panel
+       ports:
+         - "3100:3100"
+       environment:
+         - MANIAPLANET_MAPS_DIR=/maps
+       volumes:
+         # Mount your ManiaPlanet server's Maps directory
+         - /path/to/your/maniaplanet/UserData/Maps:/maps
+       restart: unless-stopped
+   ```
+
+2. **Start the service:**
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **View logs:**
+   ```bash
+   docker-compose logs -f
+   ```
+
+4. **Stop the service:**
+   ```bash
+   docker-compose down
+   ```
+
+#### Docker Configuration Notes
+
+- **Network Mode**: Use `--network host` (Linux) to allow the container to access the ManiaPlanet server on `127.0.0.1:5000`.
+  - On Windows/Mac, use the host's IP address instead of `127.0.0.1` and update `RPC_HOST` in `server.js`.
+- **Maps Directory**: The container needs access to your ManiaPlanet server's Maps directory for map uploads to work.
+- **Environment Variables**:
+  - `MANIAPLANET_MAPS_DIR`: Path inside the container where maps are stored (default: `/maps`)
+- **Port Mapping**: The panel runs on port `3100` by default.
+
+#### Pre-built Image (Coming Soon)
+
+Future releases may include pre-built images on Docker Hub for easier deployment.
+
 ### Configuring Server Restart (Required for Restart Button)
 
 ⚠️ **IMPORTANT**: The "Restart Server" button will NOT work until you configure `restart.sh` for your specific server setup!
