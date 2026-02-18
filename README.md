@@ -161,11 +161,18 @@ This ensures a clean, professional appearance while maintaining full compatibili
    ```
 
 5. Access the panel:
-   Open `http://localhost:3100` in your browser and enter your ManiaPlanet server password to login.
+   - From same machine: `http://localhost:3100`
+   - From another computer: `http://YOUR_HOST_IP:3100`
+   
+   > **Need your IP?** Run `hostname -I | awk '{print $1}'`
+   
+   Enter your ManiaPlanet server password to login.
 
 ### Docker Installation (Alternative)
 
 If you prefer using Docker, you can run the admin panel in a containerized environment:
+
+> **Important:** When using Docker, you access the panel using your **host machine's IP address**, not the container's internal IP. See [WHICH-IP.md](WHICH-IP.md) for details.
 
 #### Quick Start with Docker
 
@@ -242,17 +249,32 @@ For easier management, use Docker Compose:
    docker-compose up -d
    ```
 
-4. **View logs:**
+4. **Find your access URL:**
+   ```bash
+   # Quick helper to show exactly which URL to use
+   ./show-access-url.sh
+   
+   # Or manually find your IP:
+   hostname -I | awk '{print $1}'
+   ```
+   
+   > **Which IP to Use?** Use your **HOST machine's IP** (not the container IP). See [WHICH-IP.md](WHICH-IP.md) for detailed explanation.
+   
+   **Access from:**
+   - Same machine: `http://localhost:3100`
+   - Other computers: `http://YOUR_HOST_IP:3100`
+
+5. **View logs:**
    ```bash
    docker-compose logs -f
    ```
 
-5. **Stop the service:**
+6. **Stop the service:**
    ```bash
    docker-compose down
    ```
 
-6. **Changing configuration (e.g., ports):**
+7. **Changing configuration (e.g., ports):**
    
    > **Important:** After changing values in `.env` (like `HTTP_PORT`), you must recreate the container:
    

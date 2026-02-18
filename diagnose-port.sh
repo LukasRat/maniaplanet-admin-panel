@@ -172,17 +172,37 @@ echo ""
 
 # Summary
 echo "================================================"
-echo "SUMMARY"
+echo "SUMMARY - Which IP to Use"
 echo "================================================"
 echo ""
-echo "To access the admin panel from outside the container:"
+echo "✓ Use HOST IP (not container IP!)"
 echo ""
-echo "From same machine:"
+
+# Detect primary IP
+PRIMARY_IP=""
+if command -v hostname &> /dev/null; then
+    PRIMARY_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+fi
+if [ -z "$PRIMARY_IP" ]; then
+    PRIMARY_IP="YOUR_SERVER_IP"
+fi
+
+echo "Access the admin panel at:"
+echo ""
+echo "From SAME machine:"
 echo "  http://localhost:$PORT"
 echo ""
-echo "From other machines on same network:"
-echo "  http://YOUR_IP:$PORT"
-echo "  (Replace YOUR_IP with one of the IPs listed above)"
+echo "From OTHER machines on network:"
+echo "  http://$PRIMARY_IP:$PORT"
+echo ""
+echo "─────────────────────────────────────"
+echo "IMPORTANT:"
+echo "  - Use HOST IP: $PRIMARY_IP"
+echo "  - NOT container IP (like 172.17.x.x)"
+echo "  - NOT 0.0.0.0 (it's a config value, not an IP)"
+echo ""
+echo "See WHICH-IP.md for detailed explanation"
+echo ""
 echo ""
 echo "Common fixes if not working:"
 echo "  1. Recreate container: docker-compose down && docker-compose up -d"
