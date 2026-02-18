@@ -197,11 +197,13 @@ If you prefer using Docker, you can run the admin panel in a containerized envir
    docker run -d \
      --name maniaplanet-admin-panel \
      -p 3100:3100 \
+     -e HTTP_PORT=3100 \
+     -e RPC_HOST=host.docker.internal \
      -e MANIAPLANET_MAPS_DIR=/maps \
      -v /path/to/your/maniaplanet/UserData/Maps:/maps \
      maniaplanet-admin-panel
    ```
-   > **Note**: On Windows/Mac, you'll need to update `RPC_HOST` in `server.js` to your host machine's IP address instead of `127.0.0.1` to connect to the ManiaPlanet server.
+   > **Note**: On Windows/Mac, you can use `host.docker.internal` to connect to services on your host machine, or use your host machine's IP address for `RPC_HOST`.
    
    **Important**: Replace `/path/to/your/maniaplanet/UserData/Maps` with the actual path to your ManiaPlanet server's Maps directory.
 
@@ -212,35 +214,35 @@ If you prefer using Docker, you can run the admin panel in a containerized envir
 
 For easier management, use Docker Compose:
 
-1. **Create or edit `docker-compose.yml`** (already included in the repository):
-   ```yaml
-   version: '3.8'
-   
-   services:
-     maniaplanet-admin-panel:
-       build: .
-       container_name: maniaplanet-admin-panel
-       ports:
-         - "3100:3100"
-       environment:
-         - MANIAPLANET_MAPS_DIR=/maps
-       volumes:
-         # Mount your ManiaPlanet server's Maps directory
-         - /path/to/your/maniaplanet/UserData/Maps:/maps
-       restart: unless-stopped
+1. **Copy the example environment file:**
+   ```bash
+   cp .env.example .env
    ```
 
-2. **Start the service:**
+2. **Edit `.env` to configure your setup** (optional, defaults work for most cases):
+   ```env
+   # Application ports
+   HTTP_PORT=3100
+   
+   # ManiaPlanet server connection
+   RPC_HOST=127.0.0.1
+   RPC_PORT=5000
+   
+   # Maps directory
+   MANIAPLANET_MAPS_DIR=/maps
+   ```
+
+3. **Start the service:**
    ```bash
    docker-compose up -d
    ```
 
-3. **View logs:**
+4. **View logs:**
    ```bash
    docker-compose logs -f
    ```
 
-4. **Stop the service:**
+5. **Stop the service:**
    ```bash
    docker-compose down
    ```
@@ -248,15 +250,116 @@ For easier management, use Docker Compose:
 #### Docker Configuration Notes
 
 - **Network Mode**: Use `--network host` (Linux) to allow the container to access the ManiaPlanet server on `127.0.0.1:5000`.
-  - On Windows/Mac, use the host's IP address instead of `127.0.0.1` and update `RPC_HOST` in `server.js`.
+  - On Windows/Mac, use the host's IP address instead of `127.0.0.1` and update `RPC_HOST` environment variable.
 - **Maps Directory**: The container needs access to your ManiaPlanet server's Maps directory for map uploads to work.
 - **Environment Variables**:
+  - `HTTP_PORT`: Port for the admin panel web interface (default: `3100`)
+  - `HTTP_HOST`: Host to bind the HTTP server (default: `0.0.0.0`)
+  - `RPC_HOST`: XML-RPC host of your ManiaPlanet server (default: `127.0.0.1`)
+  - `RPC_PORT`: XML-RPC port of your ManiaPlanet server (default: `5000`)
+  - `RPC_LOGIN`: XML-RPC login for SuperAdmin access (default: `SuperAdmin`)
   - `MANIAPLANET_MAPS_DIR`: Path inside the container where maps are stored (default: `/maps`)
-- **Port Mapping**: The panel runs on port `3100` by default.
 
-#### Pre-built Image (Coming Soon)
+#### Configuring Custom Ports
 
-Future releases may include pre-built images on Docker Hub for easier deployment.
+You can customize the ports using environment variables:
+
+**Using Docker run:**
+```bash
+docker run -d \
+  --name maniaplanet-admin-panel \
+  -p 8080:8080 \
+  -e HTTP_PORT=8080 \
+  -e RPC_PORT=5001 \
+  -e MANIAPLANET_MAPS_DIR=/maps \
+  -v /path/to/your/maniaplanet/UserData/Maps:/maps \
+  maniaplanet-admin-panel
+```
+
+**Using Docker Compose:**
+
+Create a `.env` file in the same directory as `docker-compose.yml`:
+```env
+HTTP_PORT=8080
+RPC_HOST=192.168.1.100
+RPC_PORT=5001
+```
+
+Then run:
+```bash
+docker-compose up -d
+```
+
+The `.env` file will automatically be used by Docker Compose to set environment variables.
+
+#### Publishing and Using Pre-built Docker Images
+
+**Building and Tagging for Docker Hub:**
+
+1. **Build the image with a tag:**
+   ```bash
+   docker build -t yourusername/maniaplanet-admin-panel:latest .
+   docker build -t yourusername/maniaplanet-admin-panel:v1.0.0 .
+   ```
+
+2. **Login to Docker Hub:**
+   ```bash
+   docker login
+   ```
+
+3. **Push the image:**
+   ```bash
+   docker push yourusername/maniaplanet-admin-panel:latest
+   docker push yourusername/maniaplanet-admin-panel:v1.0.0
+   ```
+
+**Using a Pre-built Image:**
+
+If a pre-built image is available on Docker Hub:
+```bash
+docker pull yourusername/maniaplanet-admin-panel:latest
+docker run -d \
+  --name maniaplanet-admin-panel \
+  -p 3100:3100 \
+  -e MANIAPLANET_MAPS_DIR=/maps \
+  -v /path/to/your/maniaplanet/UserData/Maps:/maps \
+  yourusername/maniaplanet-admin-panel:latest
+```
+
+**Building from Source:**
+
+To build the image locally from the repository:
+```bash
+git clone https://github.com/LukasRat/maniaplanet-admin-panel.git
+cd maniaplanet-admin-panel
+docker build -t maniaplanet-admin-panel .
+```
+
+#### Automated Docker Image Publishing with GitHub Actions
+
+The repository includes a GitHub Actions workflow (`.github/workflows/docker-publish.yml`) that automatically builds and publishes Docker images to Docker Hub.
+
+**Setup:**
+
+1. **Create Docker Hub secrets in your GitHub repository:**
+   - Go to your repository settings → Secrets and variables → Actions
+   - Add `DOCKER_USERNAME`: Your Docker Hub username
+   - Add `DOCKER_PASSWORD`: Your Docker Hub access token (not your password - create one at https://hub.docker.com/settings/security)
+
+2. **The workflow will automatically:**
+   - Build images on every push to main/master branch
+   - Build images for pull requests (without pushing)
+   - Tag images with version numbers when you create a release tag (e.g., `v1.0.0`)
+   - Build multi-platform images (amd64 and arm64)
+   - Push to Docker Hub with appropriate tags (latest, version numbers, branch names)
+
+3. **Create a release:**
+   ```bash
+   git tag -a v1.0.0 -m "Release version 1.0.0"
+   git push origin v1.0.0
+   ```
+
+The workflow will automatically build and push the image with tags: `latest`, `v1.0.0`, `1.0`, and `1`.
 
 ### Configuring Server Restart (Required for Restart Button)
 
@@ -426,8 +529,9 @@ This happens because `node_modules/` is not included in the repository (it's in 
 
 ### Other Common Issues
 
-- **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on port 5000
-- **Port 3100 already in use:** Change `HTTP_PORT` in `server.js` or stop the process using port 3100
+- **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on the correct port (default: 5000). Use `RPC_HOST` and `RPC_PORT` environment variables to configure connection.
+- **Port already in use:** Change `HTTP_PORT` environment variable to use a different port. For Docker: `-e HTTP_PORT=8080 -p 8080:8080`
+- **Custom ports not working:** Ensure you've set both the environment variable AND updated port mappings in Docker (e.g., `-p 8080:8080` when using `HTTP_PORT=8080`)
 
 ## 📸 Features Showcase
 
