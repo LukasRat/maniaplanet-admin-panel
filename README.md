@@ -225,6 +225,7 @@ For easier management, use Docker Compose:
    ```env
    # Application ports
    HTTP_PORT=3100
+   HTTP_HOST=0.0.0.0    # IMPORTANT: Must be 0.0.0.0 for external access!
    
    # ManiaPlanet server connection
    RPC_HOST=127.0.0.1
@@ -233,6 +234,8 @@ For easier management, use Docker Compose:
    # Maps directory
    MANIAPLANET_MAPS_DIR=/maps
    ```
+   
+   > **Critical for External Access:** If you want to access the admin panel from your web browser or another computer, you MUST set `HTTP_HOST=0.0.0.0`. Without this, the application will only be accessible from inside the container.
 
 3. **Start the service:**
    ```bash
@@ -616,6 +619,40 @@ This happens because `node_modules/` is not included in the repository (it's in 
 - **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on the correct port (default: 5000). Use `RPC_HOST` and `RPC_PORT` environment variables to configure connection.
 - **Port already in use:** Change `HTTP_PORT` environment variable to use a different port. For Docker: `-e HTTP_PORT=8080 -p 8080:8080`
 - **Environment variables not loading:** Make sure your configuration file is named exactly `.env` (not `.env.txt`, `env`, or anything else). Use `cp .env.example .env` to create it properly.
+
+### Application Not Accessible from Outside Container
+
+**Problem:** Cannot access the admin panel from your web browser or another computer, even after setting the port correctly.
+
+**Quick Diagnostic:** Run the diagnostic script:
+```bash
+./diagnose-port.sh 3200
+```
+
+**Common causes:**
+1. Container not recreated after changing `.env` (must use `down` then `up -d`)
+2. `HTTP_HOST` not set to `0.0.0.0` (required for external access)
+3. Firewall blocking the port
+4. Port mapping using `127.0.0.1` instead of `0.0.0.0`
+
+**Quick fix:**
+```bash
+# Ensure .env has correct settings
+echo "HTTP_PORT=3200" > .env
+echo "HTTP_HOST=0.0.0.0" >> .env
+
+# Recreate container
+docker-compose down
+docker-compose up -d
+
+# Allow through firewall (if active)
+sudo ufw allow 3200/tcp
+
+# Verify
+docker ps  # Should show 0.0.0.0:3200->3200/tcp
+```
+
+**📖 See detailed guide:** [EXTERNAL-ACCESS.md](EXTERNAL-ACCESS.md) for complete troubleshooting steps.
 
 ### Custom Port Not Accessible
 
