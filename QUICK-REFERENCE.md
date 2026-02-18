@@ -41,10 +41,28 @@ hostname -I | awk '{print $1}'
 
 ---
 
-## 📋 Your Current Setup
+## 📋 Common Issues
 
-Based on your diagnostic output:
+### Issue 1: Connection Refused
+**Symptom:** Container runs but can't connect
 
+**Check:**
+```bash
+docker logs --tail 30 maniaplanet-admin-panel
+```
+
+**Fix:**
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+**See:** [CONNECTION-REFUSED.md](CONNECTION-REFUSED.md)
+
+---
+
+### Issue 2: Wrong Port
 **Problem:** Container is using port 3100, but .env says 3200
 
 **Fix:**

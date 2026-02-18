@@ -74,12 +74,38 @@ echo ""
 
 # Check if port is accessible locally
 if command -v curl &> /dev/null; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT 2>&1 | grep -q "200\|302"; then
-        echo "✓ Local access test successful"
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT 2>&1)
+    if echo "$HTTP_CODE" | grep -q "200\|302"; then
+        echo "✓ Local access test successful (HTTP $HTTP_CODE)"
         echo "  The admin panel is responding correctly"
     else
         echo "⚠️  Local access test failed"
-        echo "  Check container logs: docker logs maniaplanet-admin-panel"
+        if echo "$HTTP_CODE" | grep -q "000"; then
+            echo "  Error: Connection Refused"
+            echo ""
+            echo "  This usually means:"
+            echo "  1. Container is running but application crashed"
+            echo "  2. Application failed to start"
+            echo "  3. Application listening on wrong interface"
+            echo ""
+            echo "  Diagnostic steps:"
+            echo "  ─────────────────────────────────────"
+            echo "  # 1. Check container logs:"
+            echo "  docker logs --tail 50 maniaplanet-admin-panel"
+            echo ""
+            echo "  # 2. Check if container is restarting:"
+            echo "  docker ps -a | grep maniaplanet"
+            echo ""
+            echo "  # 3. Check application status inside container:"
+            echo "  docker exec maniaplanet-admin-panel ps aux | grep node"
+            echo ""
+            echo "  # 4. See detailed troubleshooting:"
+            echo "  cat CONNECTION-REFUSED.md"
+            echo ""
+        else
+            echo "  HTTP Code: $HTTP_CODE"
+            echo "  Check container logs: docker logs maniaplanet-admin-panel"
+        fi
     fi
     echo ""
 fi

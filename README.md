@@ -642,6 +642,46 @@ This happens because `node_modules/` is not included in the repository (it's in 
 - **Port already in use:** Change `HTTP_PORT` environment variable to use a different port. For Docker: `-e HTTP_PORT=8080 -p 8080:8080`
 - **Environment variables not loading:** Make sure your configuration file is named exactly `.env` (not `.env.txt`, `env`, or anything else). Use `cp .env.example .env` to create it properly.
 
+### Connection Refused Error
+
+**Problem:** Getting "Connection Refused" error when trying to access the admin panel. Container appears to be running but application is not responding.
+
+**Symptoms:**
+- `curl http://localhost:3200` fails with "Connection refused"
+- Container shows "Up" status but application not accessible
+- Diagnostic shows "Local access test failed"
+
+**Quick Diagnostic:**
+```bash
+# Check container logs for errors
+docker logs --tail 50 maniaplanet-admin-panel
+
+# Check if container is restarting
+docker ps -a | grep maniaplanet
+
+# Run full diagnostic
+./diagnose-port.sh 3200
+```
+
+**Common Causes:**
+1. Application crashed or failed to start inside container
+2. Missing dependencies (npm install not run during build)
+3. Port conflict inside container
+4. Configuration errors
+
+**Quick Fix:**
+```bash
+# Rebuild container completely
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+
+# Check logs
+docker logs -f maniaplanet-admin-panel
+```
+
+**📖 See detailed guide:** [CONNECTION-REFUSED.md](CONNECTION-REFUSED.md) for step-by-step troubleshooting.
+
 ### Application Not Accessible from Outside Container
 
 **Problem:** Cannot access the admin panel from your web browser or another computer, even after setting the port correctly.

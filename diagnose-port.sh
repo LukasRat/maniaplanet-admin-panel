@@ -44,11 +44,25 @@ echo ""
 
 # Check if container is running
 echo "2. Checking if container is running..."
+CONTAINER_STATUS=$(docker ps -a --format "{{.Names}}\t{{.Status}}" | grep maniaplanet-admin-panel)
 if docker ps | grep -q maniaplanet-admin-panel; then
     echo "   ✓ Container 'maniaplanet-admin-panel' is running"
+    # Check if it's been restarting
+    if echo "$CONTAINER_STATUS" | grep -qi "restarting"; then
+        echo "   ⚠ WARNING: Container is in restart loop!"
+        echo "     This means the application is crashing"
+        echo "     Check logs: docker logs maniaplanet-admin-panel"
+    fi
 else
-    echo "   ✗ ERROR: Container is not running!"
-    echo "     Run: docker-compose up -d"
+    if docker ps -a | grep -q maniaplanet-admin-panel; then
+        echo "   ✗ ERROR: Container exists but is not running!"
+        echo "     Status: $CONTAINER_STATUS"
+        echo "     Check logs: docker logs maniaplanet-admin-panel"
+        echo "     Try: docker-compose down && docker-compose up -d"
+    else
+        echo "   ✗ ERROR: Container is not running!"
+        echo "     Run: docker-compose up -d"
+    fi
     exit 1
 fi
 echo ""
@@ -102,11 +116,26 @@ echo ""
 # Test local access
 echo "6. Testing local access..."
 if command -v curl &> /dev/null; then
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT | grep -q "200"; then
-        echo "   ✓ Local access works (http://localhost:$PORT)"
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT 2>&1)
+    if echo "$HTTP_CODE" | grep -q "200\|302"; then
+        echo "   ✓ Local access works (HTTP $HTTP_CODE)"
     else
-        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT)
-        echo "   ✗ Local access failed (HTTP $HTTP_CODE)"
+        if echo "$HTTP_CODE" | grep -q "000"; then
+            echo "   ✗ Connection Refused (HTTP 000)"
+            echo "     Application is not responding inside container"
+            echo ""
+            echo "   Possible causes:"
+            echo "     1. Application crashed/failed to start"
+            echo "     2. Application listening on 127.0.0.1 instead of 0.0.0.0"
+            echo "     3. Port conflict inside container"
+            echo ""
+            echo "   Quick diagnostic:"
+            echo "     docker logs --tail 30 maniaplanet-admin-panel"
+            echo ""
+            echo "   See: CONNECTION-REFUSED.md for detailed troubleshooting"
+        else
+            echo "   ✗ Local access failed (HTTP $HTTP_CODE)"
+        fi
     fi
 else
     echo "   ⚠ Cannot test (curl not available)"
