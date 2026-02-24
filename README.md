@@ -95,6 +95,60 @@ The panel intelligently removes these codes from:
 
 This ensures a clean, professional appearance while maintaining full compatibility with ManiaPlanet's formatting system.
 
+## 🐳 Docker
+
+The admin panel is published as a ready-to-use image on the GitHub Container Registry and ships with a `docker-compose.yml` for easy deployment. All ports and connection settings can be changed through environment variables — no source-code edits required.
+
+The image is automatically built and pushed to **`ghcr.io/lukasrat/maniaplanet-admin-panel`** on every push to `main` and on every version tag.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `HTTP_PORT` | `3100` | Port the admin panel web server listens on |
+| `RPC_HOST` | `host.docker.internal` | Hostname/IP of the ManiaPlanet XML-RPC server |
+| `RPC_PORT` | `5000` | XML-RPC port of the ManiaPlanet server |
+| `MANIAPLANET_MAPS_DIR` | `/maps` | Path inside the container for map uploads |
+
+### Quick Start with Docker Compose
+
+```bash
+# Download the compose file
+curl -O https://raw.githubusercontent.com/LukasRat/maniaplanet-admin-panel/main/docker-compose.yml
+
+# Default ports (admin panel on 3100, XML-RPC on 5000)
+docker compose up -d
+
+# Custom ports (admin panel on 3200, XML-RPC on 5001)
+HTTP_PORT=3200 RPC_PORT=5001 docker compose up -d
+```
+
+Then open `http://localhost:3100` (or your chosen `HTTP_PORT`) in your browser.
+
+To persist map uploads, replace the `maps_data` named volume in `docker-compose.yml` with a bind mount to your ManiaPlanet server's `UserData/Maps` directory:
+
+```yaml
+volumes:
+  - /home/user/maniaplanetserver/UserData/Maps:/maps
+```
+
+### Quick Start with `docker run`
+
+```bash
+# Run with default ports (pulls the image automatically)
+docker run -d -p 3100:3100 ghcr.io/lukasrat/maniaplanet-admin-panel:latest
+
+# Run with custom HTTP port (3200) and custom XML-RPC port (5001)
+docker run -d \
+  -e HTTP_PORT=3200 \
+  -e RPC_PORT=5001 \
+  -e RPC_HOST=host.docker.internal \
+  -p 3200:3200 \
+  ghcr.io/lukasrat/maniaplanet-admin-panel:latest
+```
+
+> **Note:** `host.docker.internal` resolves to the host machine from inside a Docker container. Use this when your ManiaPlanet server runs directly on the host. On Linux you may need to add `--add-host=host.docker.internal:host-gateway` to the `docker run` command.
+
 ## Tech Stack
 
 - **Backend:** Node.js, Express, `gbxremote` (XML-RPC).

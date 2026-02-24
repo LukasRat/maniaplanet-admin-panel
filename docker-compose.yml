@@ -1,0 +1,25 @@
+services:
+  adminpanel:
+    image: ghcr.io/lukasrat/maniaplanet-admin-panel:latest
+    ports:
+      # Format: "<host_port>:<container_port>"
+      # Change the host port (left side) to expose on a different port, e.g. "3200:3200"
+      - "${HTTP_PORT:-3100}:${HTTP_PORT:-3100}"
+    environment:
+      # Port the admin panel web server listens on inside the container
+      - HTTP_PORT=${HTTP_PORT:-3100}
+      # Hostname or IP of the ManiaPlanet game server's XML-RPC interface
+      # Use "host.docker.internal" to reach the host machine from within Docker
+      - RPC_HOST=${RPC_HOST:-host.docker.internal}
+      # XML-RPC port of the ManiaPlanet game server (e.g. 5001)
+      - RPC_PORT=${RPC_PORT:-5000}
+      # Path inside the container where ManiaPlanet maps are stored
+      - MANIAPLANET_MAPS_DIR=${MANIAPLANET_MAPS_DIR:-/maps}
+    volumes:
+      # Mount your ManiaPlanet server's UserData/Maps directory here so map uploads work
+      # Example: - /home/user/maniaplanetserver/UserData/Maps:/maps
+      - maps_data:/maps
+    restart: unless-stopped
+
+volumes:
+  maps_data:
