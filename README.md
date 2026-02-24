@@ -106,17 +106,50 @@ The image is automatically built and pushed to **`ghcr.io/lukasrat/maniaplanet-a
 | Variable | Default | Description |
 |---|---|---|
 | `HTTP_PORT` | `3100` | Port the admin panel web server listens on |
-| `RPC_HOST` | `host.docker.internal` | Hostname/IP of the ManiaPlanet XML-RPC server |
+| `RPC_HOST` | `dedicated` | Hostname/IP of the ManiaPlanet XML-RPC server |
 | `RPC_PORT` | `5000` | XML-RPC port of the ManiaPlanet server |
 | `MANIAPLANET_MAPS_DIR` | `/maps` | Path inside the container for map uploads |
 
 ### Quick Start with Docker Compose
 
+The admin panel connects to your ManiaPlanet dedicated server via a shared Docker network (`xmlrpc-network`). Both services must be on the same network so that the service name `dedicated` resolves correctly via Docker's internal DNS.
+
+**Option A – Add `adminpanel` to your existing `docker-compose.yml` (recommended):**
+
+This is the simplest approach if you already have a compose file with your `dedicated` service and an `xmlrpc-network` network. Just add the `adminpanel` service block and make sure it joins the same network:
+
+```yaml
+services:
+  adminpanel:
+    image: ghcr.io/lukasrat/maniaplanet-admin-panel:latest
+    ports:
+      - "3100:3100"
+    environment:
+      - RPC_HOST=dedicated   # must match the service name of your dedicated server
+      - RPC_PORT=5000
+      - MANIAPLANET_MAPS_DIR=/maps
+    volumes:
+      - ./Maps:/maps         # point to your server's UserData/Maps directory
+    networks:
+      - xmlrpc-network
+    restart: unless-stopped
+```
+
+Then restart your stack:
+
+```bash
+docker compose up -d
+```
+
+**Option B – Run the standalone `docker-compose.yml` from this repository:**
+
+The provided `docker-compose.yml` uses `xmlrpc-network` as an external network. Make sure that network exists and your `dedicated` container is already connected to it before starting:
+
 ```bash
 # Download the compose file
 curl -O https://raw.githubusercontent.com/LukasRat/maniaplanet-admin-panel/main/docker-compose.yml
 
-# Default ports (admin panel on 3100, XML-RPC on 5000)
+# Start the admin panel (xmlrpc-network must already exist)
 docker compose up -d
 
 # Custom ports (admin panel on 3200, XML-RPC on 5001)
@@ -129,25 +162,30 @@ To persist map uploads, replace the `maps_data` named volume in `docker-compose.
 
 ```yaml
 volumes:
-  - /home/user/maniaplanetserver/UserData/Maps:/maps
+  - /path/to/your/server/UserData/Maps:/maps
 ```
 
 ### Quick Start with `docker run`
 
 ```bash
 # Run with default ports (pulls the image automatically)
-docker run -d -p 3100:3100 ghcr.io/lukasrat/maniaplanet-admin-panel:latest
+docker run -d \
+  --network xmlrpc-network \
+  -e RPC_HOST=dedicated \
+  -p 3100:3100 \
+  ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 
 # Run with custom HTTP port (3200) and custom XML-RPC port (5001)
 docker run -d \
+  --network xmlrpc-network \
   -e HTTP_PORT=3200 \
   -e RPC_PORT=5001 \
-  -e RPC_HOST=host.docker.internal \
+  -e RPC_HOST=dedicated \
   -p 3200:3200 \
   ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 ```
 
-> **Note:** `host.docker.internal` resolves to the host machine from inside a Docker container. Use this when your ManiaPlanet server runs directly on the host. On Linux you may need to add `--add-host=host.docker.internal:host-gateway` to the `docker run` command.
+> **Note:** `--network xmlrpc-network` connects the container to the shared network where your `dedicated` container lives. Docker's internal DNS then resolves the service name `dedicated` to the correct container automatically. Set `RPC_HOST` to the service name of your dedicated server if it differs.
 
 ## Tech Stack
 

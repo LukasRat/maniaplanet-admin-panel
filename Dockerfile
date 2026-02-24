@@ -10,7 +10,7 @@ COPY . .
 # Default HTTP port for the admin panel web interface
 ENV HTTP_PORT=3100
 # Host and port of the ManiaPlanet server's XML-RPC interface
-ENV RPC_HOST=host.docker.internal
+ENV RPC_HOST=dedicated
 ENV RPC_PORT=5000
 # Path inside the container where ManiaPlanet Maps are stored (mount a volume here)
 ENV MANIAPLANET_MAPS_DIR=/maps

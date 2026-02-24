@@ -9,8 +9,8 @@ services:
       # Port the admin panel web server listens on inside the container
       - HTTP_PORT=${HTTP_PORT:-3100}
       # Hostname or IP of the ManiaPlanet game server's XML-RPC interface
-      # Use "host.docker.internal" to reach the host machine from within Docker
-      - RPC_HOST=${RPC_HOST:-host.docker.internal}
+      # "dedicated" resolves to the dedicated server container on the shared Docker network
+      - RPC_HOST=${RPC_HOST:-dedicated}
       # XML-RPC port of the ManiaPlanet game server (e.g. 5001)
       - RPC_PORT=${RPC_PORT:-5000}
       # Path inside the container where ManiaPlanet maps are stored
@@ -19,7 +19,19 @@ services:
       # Mount your ManiaPlanet server's UserData/Maps directory here so map uploads work
       # Example: - /home/user/maniaplanetserver/UserData/Maps:/maps
       - maps_data:/maps
+    networks:
+      - xmlrpc-network
     restart: unless-stopped
+
+# "xmlrpc-network" is the shared network defined in your main docker-compose.yml.
+# Add the adminpanel service there directly, or reference the network as external:
+#   networks:
+#     xmlrpc-network:
+#       external: true
+# The RPC_HOST value must match the service name of your dedicated server (default: "dedicated").
+networks:
+  xmlrpc-network:
+    external: true
 
 volumes:
   maps_data:
