@@ -1,6 +1,6 @@
 services:
   adminpanel:
-    build: .
+    image: ghcr.io/lukasrat/maniaplanet-admin-panel:latest
     ports:
       # Format: "<host_port>:<container_port>"
       # Change the host port (left side) to expose on a different port, e.g. "3200:3200"

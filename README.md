@@ -97,7 +97,9 @@ This ensures a clean, professional appearance while maintaining full compatibili
 
 ## 🐳 Docker
 
-The admin panel ships with a `Dockerfile` and a `docker-compose.yml`. All ports and connection settings can be changed through environment variables — no source-code edits required.
+The admin panel is published as a ready-to-use image on the GitHub Container Registry and ships with a `docker-compose.yml` for easy deployment. All ports and connection settings can be changed through environment variables — no source-code edits required.
+
+The image is automatically built and pushed to **`ghcr.io/lukasrat/maniaplanet-admin-panel`** on every push to `main` and on every version tag.
 
 ### Environment Variables
 
@@ -111,6 +113,9 @@ The admin panel ships with a `Dockerfile` and a `docker-compose.yml`. All ports 
 ### Quick Start with Docker Compose
 
 ```bash
+# Download the compose file
+curl -O https://raw.githubusercontent.com/LukasRat/maniaplanet-admin-panel/main/docker-compose.yml
+
 # Default ports (admin panel on 3100, XML-RPC on 5000)
 docker compose up -d
 
@@ -130,11 +135,8 @@ volumes:
 ### Quick Start with `docker run`
 
 ```bash
-# Build the image
-docker build -t maniaplanet-admin-panel .
-
-# Run with default ports
-docker run -d -p 3100:3100 maniaplanet-admin-panel
+# Run with default ports (pulls the image automatically)
+docker run -d -p 3100:3100 ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 
 # Run with custom HTTP port (3200) and custom XML-RPC port (5001)
 docker run -d \
@@ -142,7 +144,7 @@ docker run -d \
   -e RPC_PORT=5001 \
   -e RPC_HOST=host.docker.internal \
   -p 3200:3200 \
-  maniaplanet-admin-panel
+  ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 ```
 
 > **Note:** `host.docker.internal` resolves to the host machine from inside a Docker container. Use this when your ManiaPlanet server runs directly on the host. On Linux you may need to add `--add-host=host.docker.internal:host-gateway` to the `docker run` command.
