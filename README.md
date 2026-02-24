@@ -112,38 +112,44 @@ The image is automatically built and pushed to **`ghcr.io/lukasrat/maniaplanet-a
 
 ### Quick Start with Docker Compose
 
-The admin panel connects to your ManiaPlanet dedicated server via a shared Docker network. Both containers must be on the same network so that the hostname `dedicated` resolves correctly.
+The admin panel connects to your ManiaPlanet dedicated server via a shared Docker network (`xmlrpc-network`). Both services must be on the same network so that the service name `dedicated` resolves correctly via Docker's internal DNS.
 
-**1. Create the shared network (once):**
+**Option A – Add `adminpanel` to your existing `docker-compose.yml` (recommended):**
 
-```bash
-docker network create maniaplanet
+This is the simplest approach if you already have a compose file with your `dedicated` service and an `xmlrpc-network` network. Just add the `adminpanel` service block and make sure it joins the same network:
+
+```yaml
+services:
+  adminpanel:
+    image: ghcr.io/lukasrat/maniaplanet-admin-panel:latest
+    ports:
+      - "3100:3100"
+    environment:
+      - RPC_HOST=dedicated   # must match the service name of your dedicated server
+      - RPC_PORT=5000
+      - MANIAPLANET_MAPS_DIR=/maps
+    volumes:
+      - ./Maps:/maps         # point to your server's UserData/Maps directory
+    networks:
+      - xmlrpc-network
+    restart: unless-stopped
 ```
 
-**2. Connect your dedicated server container to the network:**
+Then restart your stack:
 
 ```bash
-# The container name must match RPC_HOST (default: "dedicated").
-# If your container has a different name, also set RPC_HOST to match:
-#   RPC_HOST=myserver docker compose up -d
-docker network connect maniaplanet dedicated
+docker compose up -d
 ```
 
-> If your dedicated server is managed by its own `docker-compose.yml`, add the external network there instead:
-> ```yaml
-> networks:
->   maniaplanet:
->     external: true
-> ```
-> and attach the service to it with `networks: [maniaplanet]`.
+**Option B – Run the standalone `docker-compose.yml` from this repository:**
 
-**3. Download the compose file and start the admin panel:**
+The provided `docker-compose.yml` uses `xmlrpc-network` as an external network. Make sure that network exists and your `dedicated` container is already connected to it before starting:
 
 ```bash
 # Download the compose file
 curl -O https://raw.githubusercontent.com/LukasRat/maniaplanet-admin-panel/main/docker-compose.yml
 
-# Start the admin panel
+# Start the admin panel (xmlrpc-network must already exist)
 docker compose up -d
 
 # Custom ports (admin panel on 3200, XML-RPC on 5001)
@@ -156,23 +162,22 @@ To persist map uploads, replace the `maps_data` named volume in `docker-compose.
 
 ```yaml
 volumes:
-  - /home/user/maniaplanetserver/UserData/Maps:/maps
+  - /path/to/your/server/UserData/Maps:/maps
 ```
 
 ### Quick Start with `docker run`
 
 ```bash
 # Run with default ports (pulls the image automatically)
-# Pass RPC_HOST as the IP or hostname of your ManiaPlanet server
 docker run -d \
-  --network maniaplanet \
+  --network xmlrpc-network \
   -e RPC_HOST=dedicated \
   -p 3100:3100 \
   ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 
 # Run with custom HTTP port (3200) and custom XML-RPC port (5001)
 docker run -d \
-  --network maniaplanet \
+  --network xmlrpc-network \
   -e HTTP_PORT=3200 \
   -e RPC_PORT=5001 \
   -e RPC_HOST=dedicated \
@@ -180,7 +185,7 @@ docker run -d \
   ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 ```
 
-> **Note:** `--network maniaplanet` connects the container to the shared network where your `dedicated` container lives. Docker's internal DNS then resolves the name `dedicated` to the correct container automatically.
+> **Note:** `--network xmlrpc-network` connects the container to the shared network where your `dedicated` container lives. Docker's internal DNS then resolves the service name `dedicated` to the correct container automatically. Set `RPC_HOST` to the service name of your dedicated server if it differs.
 
 ## Tech Stack
 

@@ -20,15 +20,17 @@ services:
       # Example: - /home/user/maniaplanetserver/UserData/Maps:/maps
       - maps_data:/maps
     networks:
-      - maniaplanet
+      - xmlrpc-network
     restart: unless-stopped
 
-# "maniaplanet" is an external network shared with your dedicated server container.
-# Create it once with: docker network create maniaplanet
-# Then connect your dedicated server: docker network connect maniaplanet dedicated
-# The container name must match the RPC_HOST value (default: "dedicated")
+# "xmlrpc-network" is the shared network defined in your main docker-compose.yml.
+# Add the adminpanel service there directly, or reference the network as external:
+#   networks:
+#     xmlrpc-network:
+#       external: true
+# The RPC_HOST value must match the service name of your dedicated server (default: "dedicated").
 networks:
-  maniaplanet:
+  xmlrpc-network:
     external: true
 
 volumes:
