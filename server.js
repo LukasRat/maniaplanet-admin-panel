@@ -19,6 +19,10 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason)
 })
 
+function errorMessage(err) {
+  return (err && err.message) ? err.message : String(err || 'Unknown error')
+}
+
 /* =========================
    CONFIG
 ========================= */
@@ -80,7 +84,7 @@ function createRpcClient() {
     
     // Prevent server crashes from RPC connection errors
     rpc.on('error', (err) => {
-      console.error('RPC connection error:', err.message)
+      console.error('RPC connection error:', errorMessage(err))
       rpcReady = false
     })
   }
@@ -105,15 +109,19 @@ async function connectRpc() {
     await client.query('Authenticate', [RPC_LOGIN, rpcPassword])
     rpcReady = true
   } catch (err) {
-    console.error('RPC Connection failed:', err.message)
+    const message = errorMessage(err)
+    console.error('RPC Connection failed:', message)
     rpcReady = false
+    // Reset client so the next login attempt creates a fresh connection
+    rpc = null
     // Only clear password on authentication errors, not connection errors
-    if (err.message && err.message.includes('Auth')) {
+    if (message.includes('Auth')) {
       rpcPassword = null
     }
-    throw err
+    throw err instanceof Error ? err : new Error(message, { cause: err })
+  } finally {
+    rpcConnecting = false
   }
-  rpcConnecting = false
 }
 
 async function rpcCall(method, params = []) {
@@ -192,9 +200,10 @@ app.post('/api/login', async (req, res) => {
       res.status(503).json({ error: 'Could not connect to Game Server' })
     }
   } catch (err) {
-    console.error('Login error:', err.message)
+    const message = errorMessage(err)
+    console.error('Login error:', message)
     // Only clear password on auth failures
-    if (err.message && err.message.includes('Auth')) {
+    if (message.includes('Auth')) {
       rpcPassword = null
       res.status(401).json({ error: 'Authentication failed. Check your password.' })
     } else {
