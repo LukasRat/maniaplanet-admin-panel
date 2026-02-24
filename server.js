@@ -24,10 +24,10 @@ process.on('unhandledRejection', (reason, promise) => {
 ========================= */
 
 const HTTP_HOST = '0.0.0.0'  // Listen on all network interfaces
-const HTTP_PORT = 3100
+const HTTP_PORT = parseInt(process.env.HTTP_PORT, 10) || 3100
 
-const RPC_HOST = '127.0.0.1'
-const RPC_PORT = 5000
+const RPC_HOST = process.env.RPC_HOST || '127.0.0.1'
+const RPC_PORT = parseInt(process.env.RPC_PORT, 10) || 5000
 const RPC_LOGIN = 'SuperAdmin'
 
 // MAPS_DIR must point to your Maniaplanet server's UserData/Maps directory
