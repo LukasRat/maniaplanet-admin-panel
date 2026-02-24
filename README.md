@@ -106,17 +106,44 @@ The image is automatically built and pushed to **`ghcr.io/lukasrat/maniaplanet-a
 | Variable | Default | Description |
 |---|---|---|
 | `HTTP_PORT` | `3100` | Port the admin panel web server listens on |
-| `RPC_HOST` | `host.docker.internal` | Hostname/IP of the ManiaPlanet XML-RPC server |
+| `RPC_HOST` | `dedicated` | Hostname/IP of the ManiaPlanet XML-RPC server |
 | `RPC_PORT` | `5000` | XML-RPC port of the ManiaPlanet server |
 | `MANIAPLANET_MAPS_DIR` | `/maps` | Path inside the container for map uploads |
 
 ### Quick Start with Docker Compose
 
+The admin panel connects to your ManiaPlanet dedicated server via a shared Docker network. Both containers must be on the same network so that the hostname `dedicated` resolves correctly.
+
+**1. Create the shared network (once):**
+
+```bash
+docker network create maniaplanet
+```
+
+**2. Connect your dedicated server container to the network:**
+
+```bash
+# The container name must match RPC_HOST (default: "dedicated").
+# If your container has a different name, also set RPC_HOST to match:
+#   RPC_HOST=myserver docker compose up -d
+docker network connect maniaplanet dedicated
+```
+
+> If your dedicated server is managed by its own `docker-compose.yml`, add the external network there instead:
+> ```yaml
+> networks:
+>   maniaplanet:
+>     external: true
+> ```
+> and attach the service to it with `networks: [maniaplanet]`.
+
+**3. Download the compose file and start the admin panel:**
+
 ```bash
 # Download the compose file
 curl -O https://raw.githubusercontent.com/LukasRat/maniaplanet-admin-panel/main/docker-compose.yml
 
-# Default ports (admin panel on 3100, XML-RPC on 5000)
+# Start the admin panel
 docker compose up -d
 
 # Custom ports (admin panel on 3200, XML-RPC on 5001)
@@ -136,18 +163,24 @@ volumes:
 
 ```bash
 # Run with default ports (pulls the image automatically)
-docker run -d -p 3100:3100 ghcr.io/lukasrat/maniaplanet-admin-panel:latest
+# Pass RPC_HOST as the IP or hostname of your ManiaPlanet server
+docker run -d \
+  --network maniaplanet \
+  -e RPC_HOST=dedicated \
+  -p 3100:3100 \
+  ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 
 # Run with custom HTTP port (3200) and custom XML-RPC port (5001)
 docker run -d \
+  --network maniaplanet \
   -e HTTP_PORT=3200 \
   -e RPC_PORT=5001 \
-  -e RPC_HOST=host.docker.internal \
+  -e RPC_HOST=dedicated \
   -p 3200:3200 \
   ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 ```
 
-> **Note:** `host.docker.internal` resolves to the host machine from inside a Docker container. Use this when your ManiaPlanet server runs directly on the host. On Linux you may need to add `--add-host=host.docker.internal:host-gateway` to the `docker run` command.
+> **Note:** `--network maniaplanet` connects the container to the shared network where your `dedicated` container lives. Docker's internal DNS then resolves the name `dedicated` to the correct container automatically.
 
 ## Tech Stack
 
