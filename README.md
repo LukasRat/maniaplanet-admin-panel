@@ -1,4 +1,4 @@
-# ManiaPlanet Admin Panel Modernized
+# ManiaPlanet Admin Panel
 
 A sleek, modern web-based admin panel for ManiaPlanet game servers (Stadium).
 
