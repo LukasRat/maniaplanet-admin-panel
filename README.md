@@ -21,6 +21,24 @@ A sleek, modern web-based admin panel for ManiaPlanet game servers (Stadium).
 - 🔄 **Server Controls:** Restart server, restart map, skip map, and shuffle map pool
 - ⚡ **Expansion Support:** Dedicated restart for ManiaPlanet expansion/controller
 
+## Screenshots
+
+| Login | Dashboard |
+|-------|-----------|
+| ![Login][login-screenshot] | ![Dashboard][dashboard-screenshot] |
+
+| Players | Chat |
+|---------|------|
+| ![Players][players-screenshot] | ![Chat][chat-screenshot] |
+
+| Map Pool | Map Upload |
+|----------|------------|
+| ![Map Pool][mappool-screenshot] | ![Map Upload][mapupload-screenshot] |
+
+| Server Controls |
+|-----------------|
+| ![Server Controls][server-screenshot] |
+
 ## 🐳 Docker
 
 Image: **`ghcr.io/lukasrat/maniaplanet-admin-panel`** — automatically built on every push to `main` and on every version tag.
@@ -159,4 +177,10 @@ MIT
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P81TXQBY)
 
 <!-- Reference Links -->
-[dashboard-screenshot]: https://github.com/user-attachments/assets/44459f92-0f7d-4a98-ad39-57e93b9a0598
+[dashboard-screenshot]: docs/adminpanel_dashboard.png
+[login-screenshot]: docs/adminpanel_loginpng.png
+[players-screenshot]: docs/adminpanel_players.png
+[chat-screenshot]: docs/adminpanel_chatpng.png
+[mappool-screenshot]: docs/adminpanel_mappool.png
+[mapupload-screenshot]: docs/adminpanel_mapupload.png
+[server-screenshot]: docs/adminpanel_server.png
