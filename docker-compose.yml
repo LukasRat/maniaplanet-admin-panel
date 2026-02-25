@@ -16,9 +16,10 @@ services:
       # Path inside the container where ManiaPlanet maps are stored
       - MANIAPLANET_MAPS_DIR=${MANIAPLANET_MAPS_DIR:-/maps}
     volumes:
-      # Mount your ManiaPlanet server's UserData/Maps directory here so map uploads work
+      # Bind-mount your ManiaPlanet server's UserData/Maps directory so map uploads work.
+      # Replace the host path (left side) with the actual path on your host machine.
       # Example: - /home/user/maniaplanetserver/UserData/Maps:/maps
-      - maps_data:/maps
+      - /path/to/maniaplanetserver/UserData/Maps:/maps
     networks:
       - xmlrpc-network
     restart: unless-stopped
@@ -32,6 +33,3 @@ services:
 networks:
   xmlrpc-network:
     external: true
-
-volumes:
-  maps_data:
