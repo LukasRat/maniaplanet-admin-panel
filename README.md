@@ -158,13 +158,6 @@ HTTP_PORT=3200 RPC_PORT=5001 docker compose up -d
 
 Then open `http://localhost:3100` (or your chosen `HTTP_PORT`) in your browser.
 
-To persist map uploads, replace the `maps_data` named volume in `docker-compose.yml` with a bind mount to your ManiaPlanet server's `UserData/Maps` directory:
-
-```yaml
-volumes:
-  - /path/to/your/server/UserData/Maps:/maps
-```
-
 ### Quick Start with `docker run`
 
 ```bash
@@ -172,6 +165,7 @@ volumes:
 docker run -d \
   --network xmlrpc-network \
   -e RPC_HOST=dedicated \
+  -v /path/to/maniaplanetserver/UserData/Maps:/maps \
   -p 3100:3100 \
   ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 
@@ -181,11 +175,13 @@ docker run -d \
   -e HTTP_PORT=3200 \
   -e RPC_PORT=5001 \
   -e RPC_HOST=dedicated \
+  -v /path/to/maniaplanetserver/UserData/Maps:/maps \
   -p 3200:3200 \
   ghcr.io/lukasrat/maniaplanet-admin-panel:latest
 ```
 
 > **Note:** `--network xmlrpc-network` connects the container to the shared network where your `dedicated` container lives. Docker's internal DNS then resolves the service name `dedicated` to the correct container automatically. Set `RPC_HOST` to the service name of your dedicated server if it differs.
+> Replace `/path/to/maniaplanetserver/UserData/Maps` with the actual path on your host machine. This bind-mount is required for map uploads to work.
 
 ## Tech Stack
 
@@ -213,39 +209,34 @@ docker run -d \
    ```
    > **Note:** This installs Express, gbxremote, and other required packages. If you skip this step, you'll get "Cannot find module 'express'" errors.
 
-3. **Configure your server** - Edit `server.js` and update the constants at the top:
-   
-   **RPC Connection Settings:**
-   ```javascript
-   const RPC_HOST = '127.0.0.1';
-   const RPC_PORT = 5000;
-   const RPC_LOGIN = 'SuperAdmin';
-   ```
-   
+3. **Configure your server** - Set the following values via environment variables (or by editing the constants at the top of `server.js` for a quick local test):
+
+   | Setting | Environment Variable | Default | Description |
+   |---|---|---|---|
+   | HTTP port | `HTTP_PORT` | `3100` | Port the admin panel listens on |
+   | RPC host | `RPC_HOST` | `127.0.0.1` | Hostname/IP of your ManiaPlanet server |
+   | RPC port | `RPC_PORT` | `5000` | XML-RPC port of your ManiaPlanet server |
+   | Maps directory | `MANIAPLANET_MAPS_DIR` | *(see below)* | Path to your server's `UserData/Maps` directory |
+
    **⚠️ CRITICAL: Maps Directory Configuration**
-   
-   You **MUST** configure `MAPS_DIR` to point to your Maniaplanet server's actual UserData/Maps directory:
-   
-   ```javascript
-   const MAPS_DIR = '/home/user/Desktop/maniaplanetserver/UserData/Maps'
-   ```
-   
-   **Platform-specific examples:**
-   - Linux: `/home/user/Desktop/maniaplanetserver/UserData/Maps`
-   - Windows: `C:\\ManiaPlanetServer\\UserData\\Maps`
-   - Docker: `/server/UserData/Maps` (mount the server's Maps directory)
-   
-   **Using environment variable:**
+
+   You **MUST** set `MANIAPLANET_MAPS_DIR` to your ManiaPlanet server's actual `UserData/Maps` directory:
+
    ```bash
-   export MANIAPLANET_MAPS_DIR="/home/user/Desktop/maniaplanetserver/UserData/Maps"
+   # Linux
+   export MANIAPLANET_MAPS_DIR="/home/user/maniaplanetserver/UserData/Maps"
+   npm start
+
+   # Windows (PowerShell)
+   $env:MANIAPLANET_MAPS_DIR="C:\ManiaPlanetServer\UserData\Maps"
    npm start
    ```
-   
+
    **Important requirements:**
-   - Path must point to where your Maniaplanet server actually stores maps
+   - Path must point to where your ManiaPlanet server actually stores maps
    - Admin panel must have write permissions to this directory
    - Map files will be saved directly to this location
-   - If path is wrong, map uploads will fail with "Map unknown" errors
+   - If the path is wrong, map uploads will fail with "Map unknown" errors
 
 4. Start the panel:
    ```bash
@@ -362,23 +353,18 @@ The script will:
 
 If map uploads fail or show "0 maps uploaded":
 
-1. **⚠️ Check MAPS_DIR configuration (MOST COMMON ISSUE)**:
-   - Open `server.js` and find the `MAPS_DIR` constant (around line 33)
-   - It **MUST** point to your actual Maniaplanet server's UserData/Maps directory
-   - Default value `/home/user/Desktop/maniaplanetserver/UserData/Maps` is just an example!
-   - Change it to match YOUR server installation path
-   
-   Example for different setups:
-   ```javascript
-   // Linux home directory
-   const MAPS_DIR = '/home/yourname/maniaplanet-server/UserData/Maps'
-   
-   // Windows
-   const MAPS_DIR = 'C:\\ManiaPlanetServer\\UserData\\Maps'
-   
-   // Docker (with volume mount)
-   const MAPS_DIR = '/server/UserData/Maps'
-   ```
+1. **⚠️ Check `MANIAPLANET_MAPS_DIR` configuration (MOST COMMON ISSUE)**:
+   - It **MUST** point to your actual ManiaPlanet server's `UserData/Maps` directory
+   - Set it via environment variable before starting:
+     ```bash
+     export MANIAPLANET_MAPS_DIR="/path/to/your/maniaplanetserver/UserData/Maps"
+     npm start
+     ```
+   - For Docker, bind-mount the host directory and set the env var:
+     ```bash
+     docker run -e MANIAPLANET_MAPS_DIR=/maps -v /path/to/UserData/Maps:/maps ...
+     ```
+   - The default value is just a placeholder — change it to match YOUR installation
 
 2. **Verify the directory exists and is writable**:
    ```bash
@@ -424,7 +410,7 @@ This happens because `node_modules/` is not included in the repository (it's in 
 ### Other Common Issues
 
 - **Server won't connect:** Ensure your ManiaPlanet server is running with XML-RPC enabled on port 5000
-- **Port 3100 already in use:** Change `HTTP_PORT` in `server.js` or stop the process using port 3100
+- **Port 3100 already in use:** Set `HTTP_PORT` to a different value (e.g. `HTTP_PORT=3200 npm start`) or stop the process using port 3100
 
 ## 📸 Features Showcase
 
