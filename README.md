@@ -51,6 +51,9 @@ Image: **`ghcr.io/lukasrat/maniaplanet-admin-panel`** — automatically built on
 | `RPC_HOST` | `dedicated` | Hostname/IP of the ManiaPlanet XML-RPC server |
 | `RPC_PORT` | `5000` | XML-RPC port of the ManiaPlanet server |
 | `MANIAPLANET_MAPS_DIR` | `/maps` | Path inside the container for map uploads |
+| `DEDICATED_CONTAINER` | `dedicated` | Docker container name of the dedicated game server |
+| `EXPANSION_CONTAINER` | `expansion` | Docker container name of the expansion/controller |
+| `DOCKER_SOCKET` | `/var/run/docker.sock` | Path to the Docker socket inside the container |
 
 ### Quick Start with Docker Compose
 
@@ -68,8 +71,11 @@ services:
       - RPC_HOST=dedicated   # must match the service name of your dedicated server
       - RPC_PORT=5000
       - MANIAPLANET_MAPS_DIR=/maps
+      - DEDICATED_CONTAINER=dedicated   # container name for "Restart Server" button
+      - EXPANSION_CONTAINER=expansion   # container name for "Restart Expansion" button
     volumes:
       - ./Maps:/maps         # point to your server's UserData/Maps directory
+      - /var/run/docker.sock:/var/run/docker.sock  # required for container restart buttons
     networks:
       - xmlrpc-network
     restart: unless-stopped
@@ -135,6 +141,8 @@ docker run -d \
    | `RPC_HOST` | `127.0.0.1` | Hostname/IP of your ManiaPlanet server |
    | `RPC_PORT` | `5000` | XML-RPC port of your ManiaPlanet server |
    | `MANIAPLANET_MAPS_DIR` | — | Path to your server's `UserData/Maps` directory |
+   | `DEDICATED_CONTAINER` | `dedicated` | Docker container name for "Restart Server" |
+   | `EXPANSION_CONTAINER` | `expansion` | Docker container name for "Restart Expansion" |
 
    > **Note:** `MANIAPLANET_MAPS_DIR` must point to your ManiaPlanet server's actual `UserData/Maps` directory for map uploads to work.
 
@@ -145,21 +153,24 @@ docker run -d \
 
 5. Open `http://localhost:3100` and log in with your ManiaPlanet server password.
 
-### Configuring Server Restart
+### Configuring Container Restart (Docker)
 
-The "Restart Server" button requires `restart.sh` to be configured. Open the file, uncomment the method that matches your setup (systemd, screen/tmux, Docker, or custom), then make it executable:
+The "Restart Server" and "Restart Expansion" buttons use the Docker API to restart the corresponding containers. To enable them:
 
-```bash
-chmod +x restart.sh
-```
+1. Mount the Docker socket into the admin panel container:
+   ```yaml
+   volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+   ```
 
-### Configuring Expansion Restart (Optional)
+2. Set the container name environment variables to match your deployment:
+   ```yaml
+   environment:
+     - DEDICATED_CONTAINER=dedicated_masterlol   # your dedicated server container name
+     - EXPANSION_CONTAINER=expansion_masterlol   # your expansion container name
+   ```
 
-Edit `restart_expansion.sh`, set `EXPANSION_DIR` to your expansion's installation path, and make it executable:
-
-```bash
-chmod +x restart_expansion.sh
-```
+> **Note:** The default values (`dedicated` / `expansion`) match the service names in a standard compose setup. Use `docker ps` to find the exact container names in your deployment.
 
 ## Troubleshooting
 

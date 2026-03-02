@@ -172,8 +172,7 @@
           </div>
           <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 15px; padding: 0 10px;">
             <i class="fa-solid fa-info-circle"></i> 
-            Note: Server restart requires restart.sh to be configured. Edit the script and uncomment your server's restart method. See README for setup instructions.
-          </p>
+            Note: Restart buttons use the Docker API to restart containers. Mount the Docker socket and set <code>DEDICATED_CONTAINER</code> / <code>EXPANSION_CONTAINER</code> env vars. See README for setup instructions.
           </p>
         </div>
       </section>

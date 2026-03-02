@@ -10,9 +10,7 @@ const fs = require('fs')
 const fsPromises = require('fs').promises
 const multer = require('multer')
 const gbxremote = require('gbxremote')
-const { exec } = require('child_process')
-const util = require('util')
-const execPromise = util.promisify(exec)
+const http = require('http')
 
 // Handle unhandled promise rejections to prevent server crashes
 process.on('unhandledRejection', (reason, promise) => {
@@ -33,6 +31,11 @@ const HTTP_PORT = parseInt(process.env.HTTP_PORT, 10) || 3100
 const RPC_HOST = process.env.RPC_HOST || '127.0.0.1'
 const RPC_PORT = parseInt(process.env.RPC_PORT, 10) || 5000
 const RPC_LOGIN = 'SuperAdmin'
+
+// Container names for Docker restart actions (configurable via environment)
+const DEDICATED_CONTAINER = process.env.DEDICATED_CONTAINER || 'dedicated'
+const EXPANSION_CONTAINER = process.env.EXPANSION_CONTAINER || 'expansion'
+const DOCKER_SOCKET = process.env.DOCKER_SOCKET || '/var/run/docker.sock'
 
 // MAPS_DIR must point to your Maniaplanet server's UserData/Maps directory
 // This is REQUIRED for map uploads to work!
@@ -161,6 +164,55 @@ async function ensureMapInPool(file) {
   const maps = await rpcCall('GetChallengeList', [1000, 0])
   const exists = maps.some(m => m.FileName === file)
   if (!exists) await rpcCall('AddMap', [file])
+}
+
+/* =========================
+   DOCKER
+========================= */
+
+function dockerRestartContainer(containerName) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      socketPath: DOCKER_SOCKET,
+      path: `/v1.41/containers/${encodeURIComponent(containerName)}/restart`,
+      method: 'POST'
+    }
+
+    const req = http.request(options, (res) => {
+      // 204 = success, 304 = container already restarting
+      if (res.statusCode === 204 || res.statusCode === 304) {
+        resolve()
+        return
+      }
+
+      let body = ''
+      res.on('data', chunk => { body += chunk })
+      res.on('end', () => {
+        let message = `Docker API error: HTTP ${res.statusCode}`
+        try {
+          const data = JSON.parse(body)
+          if (data.message) message = data.message
+        } catch (parseErr) { /* ignore parse errors */ }
+        if (res.statusCode === 404) {
+          reject(new Error(`Container '${containerName}' not found. Set DEDICATED_CONTAINER or EXPANSION_CONTAINER env var to the correct container name.`))
+        } else {
+          reject(new Error(message))
+        }
+      })
+    })
+
+    req.on('error', (err) => {
+      if (err.code === 'ENOENT') {
+        reject(new Error(`Docker socket not found at ${DOCKER_SOCKET}. Mount the Docker socket: -v /var/run/docker.sock:${DOCKER_SOCKET}`))
+      } else if (err.code === 'EACCES') {
+        reject(new Error(`Permission denied accessing Docker socket. Ensure the container has access to ${DOCKER_SOCKET}.`))
+      } else {
+        reject(err)
+      }
+    })
+
+    req.end()
+  })
 }
 
 /* =========================
@@ -376,56 +428,11 @@ app.post('/api/server/restart-map', async (_, res) => {
 
 app.post('/api/server/restart', async (_, res) => {
   try {
-    // Execute the restart.sh script
-    const scriptPath = path.join(__dirname, 'restart.sh')
-    
-    // Check if restart.sh exists
-    if (!fs.existsSync(scriptPath)) {
-      return res.status(500).json({ 
-        error: 'restart.sh script not found. Please create and configure the restart script.' 
-      })
-    }
-    
-    // Check if the script is executable
-    try {
-      fs.accessSync(scriptPath, fs.constants.X_OK)
-    } catch (err) {
-      return res.status(500).json({
-        error: 'restart.sh script is not executable. Run: chmod +x restart.sh'
-      })
-    }
-    
-    // Execute the script and capture output
-    try {
-      const { stdout, stderr } = await execPromise(scriptPath)
-      
-      // Log the output
-      console.log('=== Restart Script Success ===')
-      console.log(stdout)
-      if (stderr) console.log('stderr:', stderr)
-      console.log('==============================')
-      
-      res.json({ 
-        ok: true, 
-        message: 'Server restart completed successfully.',
-        output: stdout
-      })
-    } catch (error) {
-      // Script failed - this is expected if not configured
-      const output = error.stdout || error.stderr || error.message
-      
-      console.log('=== Restart Script Failed ===')
-      console.log('Exit code:', error.code)
-      console.log('Output:', output)
-      console.log('=============================')
-      
-      // Return error with the script's output so user knows what to configure
-      return res.status(500).json({ 
-        error: 'Restart script not configured or failed. Please configure restart.sh for your server setup.',
-        details: output,
-        exitCode: error.code
-      })
-    }
+    await dockerRestartContainer(DEDICATED_CONTAINER)
+    res.json({
+      ok: true,
+      message: `Container '${DEDICATED_CONTAINER}' is restarting.`
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -433,56 +440,11 @@ app.post('/api/server/restart', async (_, res) => {
 
 app.post('/api/server/restart-expansion', async (_, res) => {
   try {
-    // Execute the restart_expansion.sh script
-    const scriptPath = path.join(__dirname, 'restart_expansion.sh')
-    
-    // Check if restart_expansion.sh exists
-    if (!fs.existsSync(scriptPath)) {
-      return res.status(500).json({ 
-        error: 'restart_expansion.sh script not found. Please create the expansion restart script.' 
-      })
-    }
-    
-    // Check if the script is executable
-    try {
-      fs.accessSync(scriptPath, fs.constants.X_OK)
-    } catch (err) {
-      return res.status(500).json({
-        error: 'restart_expansion.sh script is not executable. Run: chmod +x restart_expansion.sh'
-      })
-    }
-    
-    // Execute the script and capture output
-    try {
-      const { stdout, stderr } = await execPromise(scriptPath)
-      
-      // Log the output
-      console.log('=== Expansion Restart Script Success ===')
-      console.log(stdout)
-      if (stderr) console.log('stderr:', stderr)
-      console.log('=========================================')
-      
-      res.json({ 
-        ok: true, 
-        message: 'Expansion restart completed successfully.',
-        output: stdout
-      })
-    } catch (error) {
-      // Script failed
-      const output = error.stdout || error.stderr || error.message
-      
-      console.log('=== Expansion Restart Script Failed ===')
-      console.log('Exit code:', error.code)
-      console.log('Output:', output)
-      console.log('========================================')
-      
-      // Return error with the script's output
-      return res.status(500).json({ 
-        error: 'Expansion restart script failed. Check server logs for details.',
-        details: output,
-        exitCode: error.code
-      })
-    }
+    await dockerRestartContainer(EXPANSION_CONTAINER)
+    res.json({
+      ok: true,
+      message: `Container '${EXPANSION_CONTAINER}' is restarting.`
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
