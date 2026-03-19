@@ -51,6 +51,7 @@ Image: **`ghcr.io/lukasrat/maniaplanet-admin-panel`** — automatically built on
 | `RPC_HOST` | `dedicated` | Hostname/IP of the ManiaPlanet XML-RPC server |
 | `RPC_PORT` | `5000` | XML-RPC port of the ManiaPlanet server |
 | `MANIAPLANET_MAPS_DIR` | `/maps` | Path inside the container for map uploads |
+| `CHAT_ADMIN_PREFIX` | `Admin` | Name shown in the chat prefix `[Admin:xyz]` when sending messages from the panel |
 
 ### Quick Start with Docker Compose
 
