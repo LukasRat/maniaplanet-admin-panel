@@ -202,7 +202,10 @@
               <div class="chat-placeholder">Chat messages will appear here when available</div>
             </div>
             <div class="chat-input-container">
-              <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input">
+              <span class="chat-prefix-label">[Admin:</span>
+              <input type="text" id="chat-prefix" placeholder="Name" class="chat-prefix-input" value="Admin" onkeypress="if(event.key === 'Enter') app.sendChat()">
+              <span class="chat-prefix-label">]</span>
+              <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input" onkeypress="if(event.key === 'Enter') app.sendChat()">
               <button class="btn-primary" onclick="app.sendChat()">
                 <i class="fa-solid fa-paper-plane"></i> Send
               </button>

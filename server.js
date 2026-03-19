@@ -654,8 +654,9 @@ app.get('/api/game/status', async (_, res) => {
 
 app.post('/api/chat/send', async (req, res) => {
   try {
-    const { message } = req.body
-    const prefixedMessage = `[Admin:${CHAT_ADMIN_PREFIX}] ${message}`
+    const { message, prefix } = req.body
+    const adminPrefix = (prefix && prefix.trim()) ? prefix.trim() : CHAT_ADMIN_PREFIX
+    const prefixedMessage = `[Admin:${adminPrefix}] ${message}`
     await rpcCall('ChatSendServerMessage', [prefixedMessage])
     res.json({ ok: true })
   } catch (err) {
@@ -665,8 +666,9 @@ app.post('/api/chat/send', async (req, res) => {
 
 app.post('/api/chat/private', async (req, res) => {
   try {
-    const { login, message } = req.body
-    const prefixedMessage = `[Admin:${CHAT_ADMIN_PREFIX}] ${message}`
+    const { login, message, prefix } = req.body
+    const adminPrefix = (prefix && prefix.trim()) ? prefix.trim() : CHAT_ADMIN_PREFIX
+    const prefixedMessage = `[Admin:${adminPrefix}] ${message}`
     await rpcCall('ChatSendServerMessageToLogin', [prefixedMessage, login])
     res.json({ ok: true })
   } catch (err) {

@@ -528,6 +528,20 @@ input:focus {
 .chat-input-container {
   display: flex;
   gap: 10px;
+  align-items: center;
+}
+
+.chat-prefix-label {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.chat-prefix-input {
+  width: 100px;
+  padding: 10px 10px;
+  font-size: 0.95rem;
+  flex-shrink: 0;
 }
 
 .chat-input {

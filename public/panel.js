@@ -423,10 +423,12 @@ const app = {
 
   async sendChat() {
     const input = document.getElementById('chat-input')
+    const prefixInput = document.getElementById('chat-prefix')
     const message = input.value.trim()
     if (!message) return
 
-    await this.post('/chat/send', { message })
+    const prefix = prefixInput.value.trim() || prefixInput.placeholder
+    await this.post('/chat/send', { message, prefix })
     input.value = ''
     this.showToast('Message sent')
   },
