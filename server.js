@@ -34,6 +34,10 @@ const RPC_HOST = process.env.RPC_HOST || '127.0.0.1'
 const RPC_PORT = parseInt(process.env.RPC_PORT, 10) || 5000
 const RPC_LOGIN = 'SuperAdmin'
 
+// CHAT_ADMIN_PREFIX is shown as the sender name in the chat prefix [Admin:xyz]
+// Set this to identify who is sending messages from the admin panel
+const CHAT_ADMIN_PREFIX = process.env.CHAT_ADMIN_PREFIX || 'Admin'
+
 // MAPS_DIR must point to your Maniaplanet server's UserData/Maps directory
 // This is REQUIRED for map uploads to work!
 // 
@@ -651,7 +655,8 @@ app.get('/api/game/status', async (_, res) => {
 app.post('/api/chat/send', async (req, res) => {
   try {
     const { message } = req.body
-    await rpcCall('ChatSendServerMessage', [message])
+    const prefixedMessage = `[Admin:${CHAT_ADMIN_PREFIX}] ${message}`
+    await rpcCall('ChatSendServerMessage', [prefixedMessage])
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -661,7 +666,8 @@ app.post('/api/chat/send', async (req, res) => {
 app.post('/api/chat/private', async (req, res) => {
   try {
     const { login, message } = req.body
-    await rpcCall('ChatSendServerMessageToLogin', [message, login])
+    const prefixedMessage = `[Admin:${CHAT_ADMIN_PREFIX}] ${message}`
+    await rpcCall('ChatSendServerMessageToLogin', [prefixedMessage, login])
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
