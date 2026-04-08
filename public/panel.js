@@ -54,6 +54,9 @@ const app = {
       // Init Drag & Drop
       this.initDragAndDrop()
 
+      // Load saved admin name
+      this.loadAdminName()
+
       // Update connection status
       this.updateConnectionStatus(true)
 
@@ -468,12 +471,40 @@ const app = {
 
   // --- Chat ---
 
+  updateAdminNamePreview(name) {
+    const preview = document.getElementById('admin-name-preview')
+    if (preview) {
+      preview.textContent = name ? `[Admin:${name}]` : '[Admin:…]'
+    }
+  },
+
+  saveAdminName() {
+    const nameInput = document.getElementById('admin-name-input')
+    const name = nameInput.value.trim()
+    localStorage.setItem('adminName', name)
+    this.updateAdminNamePreview(name)
+  },
+
+  loadAdminName() {
+    const saved = localStorage.getItem('adminName') || ''
+    const nameInput = document.getElementById('admin-name-input')
+    if (nameInput) {
+      nameInput.value = saved
+      this.updateAdminNamePreview(saved.trim())
+    }
+  },
+
   async sendChat() {
     const input = document.getElementById('chat-input')
     const message = input.value.trim()
     if (!message) return
 
-    await this.post('/chat/send', { message })
+    const nameInput = document.getElementById('admin-name-input')
+    const adminName = nameInput ? nameInput.value.trim() : ''
+
+    const fullMessage = adminName ? `[Admin:${adminName}] ${message}` : message
+
+    await this.post('/chat/send', { message: fullMessage })
     input.value = ''
     this.showToast('Message sent')
   },
