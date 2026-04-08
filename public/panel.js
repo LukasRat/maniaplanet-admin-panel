@@ -490,7 +490,7 @@ const app = {
     const nameInput = document.getElementById('admin-name-input')
     if (nameInput) {
       nameInput.value = saved
-      this.updateAdminNamePreview(saved.trim())
+      this.updateAdminNamePreview(saved)
     }
   },
 

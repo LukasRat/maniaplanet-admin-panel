@@ -225,7 +225,7 @@
             <label for="admin-name-input" class="admin-name-label">
               <i class="fa-solid fa-user-shield"></i> Admin Name
             </label>
-            <input type="text" id="admin-name-input" class="admin-name-input" placeholder="Enter your name..." maxlength="32" oninput="app.saveAdminName()">
+            <input type="text" id="admin-name-input" class="admin-name-input" placeholder="Enter your name..." maxlength="32" oninput="app.updateAdminNamePreview(this.value.trim())" onchange="app.saveAdminName()">
             <span class="admin-name-preview" id="admin-name-preview">[Admin:…]</span>
           </div>
           <div class="chat-container">
