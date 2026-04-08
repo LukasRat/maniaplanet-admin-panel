@@ -221,12 +221,19 @@
       <section id="tab-chat" class="section">
         <h2>Server Chat</h2>
         <div class="card">
+          <div class="admin-name-bar">
+            <label for="admin-name-input" class="admin-name-label">
+              <i class="fa-solid fa-user-shield"></i> Admin Name
+            </label>
+            <input type="text" id="admin-name-input" class="admin-name-input" placeholder="Enter your name..." maxlength="32" oninput="app.updateAdminNamePreview(this.value.trim())" onchange="app.saveAdminName()">
+            <span class="admin-name-preview" id="admin-name-preview">[Admin:…]</span>
+          </div>
           <div class="chat-container">
             <div id="chat-messages" class="chat-messages">
               <div class="chat-placeholder">Chat messages will appear here when available</div>
             </div>
             <div class="chat-input-container">
-              <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input">
+              <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input" onkeypress="if(event.key === 'Enter') app.sendChat()">
               <button class="btn-primary" onclick="app.sendChat()">
                 <i class="fa-solid fa-paper-plane"></i> Send
               </button>
