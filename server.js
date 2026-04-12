@@ -422,63 +422,6 @@ app.post('/api/server/restart', async (_, res) => {
   }
 })
 
-app.post('/api/server/restart-expansion', async (_, res) => {
-  try {
-    // Execute the restart_expansion.sh script
-    const scriptPath = path.join(__dirname, 'restart_expansion.sh')
-    
-    // Check if restart_expansion.sh exists
-    if (!fs.existsSync(scriptPath)) {
-      return res.status(500).json({ 
-        error: 'restart_expansion.sh script not found. Please create the expansion restart script.' 
-      })
-    }
-    
-    // Check if the script is executable
-    try {
-      fs.accessSync(scriptPath, fs.constants.X_OK)
-    } catch (err) {
-      return res.status(500).json({
-        error: 'restart_expansion.sh script is not executable. Run: chmod +x restart_expansion.sh'
-      })
-    }
-    
-    // Execute the script and capture output
-    try {
-      const { stdout, stderr } = await execPromise(scriptPath)
-      
-      // Log the output
-      console.log('=== Expansion Restart Script Success ===')
-      console.log(stdout)
-      if (stderr) console.log('stderr:', stderr)
-      console.log('=========================================')
-      
-      res.json({ 
-        ok: true, 
-        message: 'Expansion restart completed successfully.',
-        output: stdout
-      })
-    } catch (error) {
-      // Script failed
-      const output = error.stdout || error.stderr || error.message
-      
-      console.log('=== Expansion Restart Script Failed ===')
-      console.log('Exit code:', error.code)
-      console.log('Output:', output)
-      console.log('========================================')
-      
-      // Return error with the script's output
-      return res.status(500).json({ 
-        error: 'Expansion restart script failed. Check server logs for details.',
-        details: output,
-        exitCode: error.code
-      })
-    }
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
 /* =========================
    ENHANCED PLAYER MANAGEMENT
 ========================= */
