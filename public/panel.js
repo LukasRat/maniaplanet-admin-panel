@@ -410,37 +410,6 @@ const app = {
     }
   },
 
-  async restartExpansion() {
-    const confirmed = await this.confirm('Restart the expansion (server controller)?', 'Restart Expansion')
-    if (!confirmed) return
-    try {
-      const response = await fetch(`${API}/server/restart-expansion`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      })
-      
-      const data = await response.json()
-      
-      if (!response.ok) {
-        // Show detailed error message
-        let errorMsg = data.error || 'Expansion restart failed'
-        if (data.details) {
-          // Show configuration error details
-          console.error('Expansion restart script output:', data.details)
-          errorMsg += '\n\nCheck the browser console or server logs for details.'
-        }
-        throw new Error(errorMsg)
-      }
-      
-      this.showToast(data.message || 'Expansion restarting...')
-      
-      // Refresh after a short delay
-      setTimeout(() => this.refresh(), 2000)
-    } catch (err) {
-      this.showToast(err.message || 'Failed to restart expansion', 'error')
-    }
-  },
-
   // --- Enhanced Player Actions ---
 
   async spectate(login) {

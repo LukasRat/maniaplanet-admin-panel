@@ -4,7 +4,6 @@
 # Konfiguration
 # ==============================
 SERVER_DIR="/home/user/Desktop/maniaplanetserver"
-EXPANSION_DIR="/home/user/Desktop/expansion"
 ADMINPANEL_DIR="/home/user/Desktop/maniaplanetserver/adminpanel"
 
 SERVER_BIN="./ManiaPlanetServer"
@@ -40,7 +39,7 @@ SERVER_ARGS="/dedicated_cfg=dedicated_cfg.txt \
 # ==============================
 # Stop Node Adminpanel
 # ==============================
-echo "[0/5] Stopping node server.js..."
+echo "[0/3] Stopping node server.js..."
 pkill -TERM -f "$NODE_PROCESS"
 
 while pgrep -f "$NODE_PROCESS" >/dev/null; do
@@ -53,7 +52,7 @@ echo "  ✔ node server.js stopped"
 # ==============================
 # Stop Server
 # ==============================
-echo "[1/5] Stopping ManiaPlanetServer..."
+echo "[1/3] Stopping ManiaPlanetServer..."
 
 pkill -TERM -f "$PROCESS_NAME"
 
@@ -67,7 +66,7 @@ sleep 10
 # ==============================
 # Start Server
 # ==============================
-echo "[2/5] Starting ManiaPlanetServer..."
+echo "[2/3] Starting ManiaPlanetServer..."
 cd "$SERVER_DIR" || exit 1
 
 $SERVER_BIN $SERVER_ARGS &
@@ -84,25 +83,10 @@ sleep 5
 # ==============================
 # Start Node Adminpanel
 # ==============================
-echo "[3/5] Starting node server.js..."
+echo "[3/3] Starting node server.js..."
 cd "$ADMINPANEL_DIR" || exit 1
 nohup node server.js > adminpanel.log 2>&1 &
 
 echo "  ✔ node server.js running"
-
-# ==============================
-# Expansion stoppen
-# ==============================
-echo "[4/5] Stopping expansion..."
-cd "$EXPANSION_DIR" || exit 1
-./run --stop
-
-sleep 10
-
-# ==============================
-# Expansion starten
-# ==============================
-echo "[5/5] Starting expansion..."
-./run --start
 
 echo "✔ Restart complete"
